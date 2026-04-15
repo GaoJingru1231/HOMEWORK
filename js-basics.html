@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript 基础知识练习</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", Arial, sans-serif;
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 0 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2980b9; margin-top: 30px; }
+    pre {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .output {
+      background: #eafaf1;
+      border-left: 4px solid #27ae60;
+      padding: 10px 15px;
+      margin-top: 8px;
+      border-radius: 0 4px 4px 0;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .section {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+
+<h1>JavaScript 基础知识练习</h1>
+
+<!-- ===== 1. 变量的定义 ===== -->
+<div class="section">
+  <h2>1. 变量的定义</h2>
+  <pre id="code-var"></pre>
+  <div class="output" id="out-var"></div>
+</div>
+
+<!-- ===== 2. 变量类型 ===== -->
+<div class="section">
+  <h2>2. 变量类型</h2>
+  <pre id="code-type"></pre>
+  <div class="output" id="out-type"></div>
+</div>
+
+<!-- ===== 3. 表达式 ===== -->
+<div class="section">
+  <h2>3. 表达式</h2>
+  <pre id="code-expr"></pre>
+  <div class="output" id="out-expr"></div>
+</div>
+
+<!-- ===== 4. 流程控制 ===== -->
+<div class="section">
+  <h2>4. 流程控制</h2>
+  <pre id="code-flow"></pre>
+  <div class="output" id="out-flow"></div>
+</div>
+
+<!-- ===== 5. 函数 ===== -->
+<div class="section">
+  <h2>5. 函数</h2>
+  <pre id="code-func"></pre>
+  <div class="output" id="out-func"></div>
+</div>
+
+<script>
+// ========== 工具：把代码显示到页面，同时收集 console.log 输出 ==========
+function runAndShow(sectionId, codeStr) {
+  document.getElementById('code-' + sectionId).textContent = codeStr;
+  var logs = [];
+  var origLog = console.log;
+  console.log = function() {
+    var args = Array.prototype.slice.call(arguments);
+    logs.push(args.join(' '));
+    origLog.apply(console, args);
+  };
+  try {
+    // eslint-disable-next-line no-new-func
+    new Function(codeStr)();
+  } catch (e) {
+    logs.push('错误: ' + e.message);
+  }
+  console.log = origLog;
+  document.getElementById('out-' + sectionId).textContent = logs.join('\n');
+}
+
+// ======================== 1. 变量的定义 ========================
+runAndShow('var', `
+// var：函数作用域，可重复声明
+var name = "张三";
+var age  = 20;
+console.log("var  name:", name, "  age:", age);
+
+// let：块作用域，不可重复声明
+let city = "北京";
+city = "上海";            // 可以重新赋值
+console.log("let  city:", city);
+
+// const：块作用域，声明时必须赋值，不可再赋值（引用类型内部可变）
+const PI = 3.14159;
+console.log("const PI:", PI);
+
+// 同时声明多个变量
+let x = 1, y = 2, z = 3;
+console.log("多变量:", x, y, z);
+`.trim());
+
+// ======================== 2. 变量类型 ========================
+runAndShow('type', `
+// 基本类型（原始类型）
+var num    = 42;           // Number
+var str    = "Hello JS";   // String
+var bool   = true;         // Boolean
+var nothing = null;        // Null
+var undef;                 // Undefined
+var sym    = Symbol("id"); // Symbol (ES6)
+var big    = 9007199254740993n; // BigInt (ES2020)
+
+// 引用类型
+var arr  = [1, 2, 3];
+var obj  = { name: "李四", age: 18 };
+var fn   = function() { return "我是函数"; };
+
+console.log("Number   :", typeof num,    "->", num);
+console.log("String   :", typeof str,    "->", str);
+console.log("Boolean  :", typeof bool,   "->", bool);
+console.log("Null     :", typeof nothing, "->", nothing);
+console.log("Undefined:", typeof undef,  "->", undef);
+console.log("Symbol   :", typeof sym,    "->", sym.toString());
+console.log("BigInt   :", typeof big,    "->", big);
+console.log("Array    :", Array.isArray(arr), "->", arr);
+console.log("Object   :", typeof obj,   "->", JSON.stringify(obj));
+console.log("Function :", typeof fn,    "->", fn());
+
+// 类型转换
+console.log("字符串转数字 Number('3.14'):", Number("3.14"));
+console.log("数字转字符串 String(100)   :", String(100));
+console.log("转布尔 Boolean(0) / Boolean(1):", Boolean(0), "/", Boolean(1));
+`.trim());
+
+// ======================== 3. 表达式 ========================
+runAndShow('expr', `
+// 算术运算符
+var a = 10, b = 3;
+console.log("算术: +", a+b, " -", a-b, " *", a*b, " /", a/b, " %", a%b, " **", a**b);
+
+// 赋值运算符
+var c = 5;
+c += 3; console.log("+=  :", c);
+c -= 2; console.log("-=  :", c);
+c *= 4; console.log("*=  :", c);
+c /= 3; console.log("/=  :", c);
+
+// 比较运算符
+console.log("==  (宽松)  3 == '3'  :", 3 == '3');
+console.log("=== (严格)  3 === '3' :", 3 === '3');
+console.log(">   10 > 3            :", 10 > 3);
+console.log("<=  10 <= 10          :", 10 <= 10);
+
+// 逻辑运算符
+console.log("&&  true && false     :", true && false);
+console.log("||  false || true     :", false || true);
+console.log("!   !true             :", !true);
+
+// 三元运算符
+var score = 85;
+var grade = score >= 60 ? "及格" : "不及格";
+console.log("三元运算符，score=85 ->", grade);
+
+// 字符串拼接
+var firstName = "高", lastName = "晶汝";
+console.log("字符串拼接:", firstName + lastName);
+console.log("模板字符串: \`姓名: \${firstName + lastName}\`");
+`.trim());
+
+// ======================== 4. 流程控制 ========================
+runAndShow('flow', `
+// if / else if / else
+var score = 78;
+if (score >= 90) {
+  console.log("if-else: 优秀");
+} else if (score >= 75) {
+  console.log("if-else: 良好  (score=" + score + ")");
+} else if (score >= 60) {
+  console.log("if-else: 及格");
+} else {
+  console.log("if-else: 不及格");
+}
+
+// switch
+var day = 3;
+switch (day) {
+  case 1: console.log("switch: 星期一"); break;
+  case 2: console.log("switch: 星期二"); break;
+  case 3: console.log("switch: 星期三"); break;
+  default: console.log("switch: 其他");
+}
+
+// for 循环
+var sum = 0;
+for (var i = 1; i <= 5; i++) { sum += i; }
+console.log("for 1+2+3+4+5 =", sum);
+
+// while 循环
+var n = 1, product = 1;
+while (n <= 5) { product *= n; n++; }
+console.log("while 5! =", product);
+
+// for...of（遍历数组）
+var fruits = ["苹果", "香蕉", "橙子"];
+var result = "";
+for (var fruit of fruits) { result += fruit + " "; }
+console.log("for...of:", result.trim());
+
+// for...in（遍历对象）
+var person = { name: "王五", age: 22, city: "广州" };
+var keys = "";
+for (var key in person) { keys += key + "=" + person[key] + " "; }
+console.log("for...in:", keys.trim());
+
+// break / continue
+var nums = "";
+for (var j = 0; j < 10; j++) {
+  if (j === 3) continue;   // 跳过 3
+  if (j === 7) break;      // 到 7 停止
+  nums += j + " ";
+}
+console.log("break/continue:", nums.trim());
+`.trim());
+
+// ======================== 5. 函数 ========================
+runAndShow('func', `
+// 函数声明（有提升）
+function greet(name) {
+  return "你好，" + name + "！";
+}
+console.log("函数声明:", greet("晶汝"));
+
+// 函数表达式
+var square = function(x) {
+  return x * x;
+};
+console.log("函数表达式 square(7):", square(7));
+
+// 箭头函数 (ES6)
+var add = (a, b) => a + b;
+console.log("箭头函数 add(3,4):", add(3, 4));
+
+// 默认参数 (ES6)
+function power(base, exp = 2) {
+  return Math.pow(base, exp);
+}
+console.log("默认参数 power(5):", power(5), "  power(2,10):", power(2, 10));
+
+// 剩余参数 (Rest)
+function sumAll(...nums) {
+  return nums.reduce(function(acc, cur) { return acc + cur; }, 0);
+}
+console.log("剩余参数 sumAll(1,2,3,4,5):", sumAll(1, 2, 3, 4, 5));
+
+// 递归函数
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+var fibs = "";
+for (var k = 0; k <= 8; k++) { fibs += fibonacci(k) + " "; }
+console.log("递归-斐波那契(0-8):", fibs.trim());
+
+// 立即执行函数 (IIFE)
+var result = (function() {
+  var secret = 42;
+  return "IIFE 返回值: " + secret;
+})();
+console.log(result);
+
+// 高阶函数
+var numbers = [5, 3, 8, 1, 9, 2, 7];
+var sorted   = [...numbers].sort((a, b) => a - b);
+var doubled  = numbers.map(n => n * 2);
+var evens    = numbers.filter(n => n % 2 === 0);
+var total    = numbers.reduce((acc, n) => acc + n, 0);
+console.log("原数组:", numbers.join(", "));
+console.log("排序:  ", sorted.join(", "));
+console.log("*2:   ", doubled.join(", "));
+console.log("偶数:  ", evens.join(", "));
+console.log("求和:  ", total);
+`.trim());
+
+</script>
+</body>
+</html>
