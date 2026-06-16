@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>格式快调 - 论文自动排版工具</title>
+<style>
+  /* ===== CSS Reset & Variables ===== */
+  :root {
+    --primary: #1a365d;
+    --primary-light: #2b6cb0;
+    --primary-lighter: #3182ce;
+    --accent: #e2a03f;
+    --success: #38a169;
+    --danger: #e53e3e;
+    --bg: #f7fafc;
+    --bg-card: #ffffff;
+    --text: #2d3748;
+    --text-secondary: #718096;
+    --border: #e2e8f0;
+    --border-light: #edf2f7;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 14px rgba(0,0,0,0.10);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font-sans: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+    --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ===== Navigation ===== */
+  .nav {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.92);
+  }
+  .nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+  }
+  .nav-brand .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.925rem;
+    font-weight: 500;
+    transition: var(--transition);
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--primary-light); }
+  .nav-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--primary-light);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--primary-light); color: var(--primary-light); }
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-accent:hover { background: #d4922f; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-success {
+    background: var(--success);
+    color: white;
+  }
+  .btn-large { padding: 14px 36px; font-size: 1.05rem; }
+  .btn-small { padding: 6px 16px; font-size: 0.85rem; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* ===== Hero Section ===== */
+  .hero {
+    text-align: center;
+    padding: 80px 40px 60px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .hero h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .hero h1 .highlight {
+    background: linear-gradient(135deg, var(--primary-light), #4299e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 620px;
+    margin: 0 auto 32px;
+  }
+
+  /* ===== Upload Zone ===== */
+  .upload-section {
+    max-width: 720px;
+    margin: 0 auto 40px;
+    padding: 0 40px;
+  }
+  .upload-zone {
+    border: 3px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 60px 40px;
+    text-align: center;
+    background: var(--bg-card);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--primary-light);
+    background: #ebf4ff;
+  }
+  .upload-zone.drag-over { transform: scale(1.01); }
+  .upload-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: #ebf4ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+  .upload-zone h3 {
+    font-size: 1.2rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .upload-zone .sub {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* ===== File Info Card ===== */
+  .file-card {
+    max-width: 720px;
+    margin: 20px auto;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+  }
+  .file-card .file-icon {
+    width: 48px;
+    height: 48px;
+    background: #ebf4ff;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .file-card .file-info { flex: 1; min-width: 0; }
+  .file-card .file-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-card .file-meta { color: var(--text-secondary); font-size: 0.8rem; }
+  .file-card .file-remove {
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    cursor: pointer; font-size: 1.1rem;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    transition: var(--transition);
+  }
+  .file-card .file-remove:hover { background: #fed7d7; color: var(--danger); }
+
+  /* ===== Tabs ===== */
+  .tabs-section {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-light);
+    margin-bottom: 24px;
+  }
+  .tab {
+    padding: 12px 28px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.925rem;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: var(--transition);
+  }
+  .tab.active {
+    color: var(--primary-light);
+    border-bottom-color: var(--primary-light);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ===== Template Cards ===== */
+  .template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .template-card {
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--bg-card);
+  }
+  .template-card:hover { border-color: var(--primary-lighter); box-shadow: var(--shadow-sm); }
+  .template-card.selected {
+    border-color: var(--primary-light);
+    background: #ebf4ff;
+  }
+  .template-card .template-name { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+  .template-card .template-desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+
+  /* ===== Format Params ===== */
+  .format-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+  }
+  .format-group {
+    margin-bottom: 24px;
+  }
+  .format-group h4 {
+    font-size: 0.95rem;
+    color: var(--primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .format-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+  }
+  .format-field label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .format-field select, .format-field input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    background: var(--bg);
+    transition: var(--transition);
+  }
+  .format-field select:focus, .format-field input:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.12);
+  }
+
+  /* ===== Progress / Report ===== */
+  .report-panel {
+    max-width: 720px;
+    margin: 30px auto;
+    padding: 0 40px;
+  }
+  .report-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+  }
+  .report-card h3 { font-size: 1.15rem; color: var(--primary); margin-bottom: 16px; }
+  .report-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stat-item {
+    text-align: center;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+  }
+  .stat-item .stat-num { font-size: 1.8rem; font-weight: 800; }
+  .stat-item .stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+  .stat-item.fixed .stat-num { color: var(--success); }
+  .stat-item.warning .stat-num { color: var(--accent); }
+  .stat-item.unfixed .stat-num { color: var(--danger); }
+  .issue-list { list-style: none; }
+  .issue-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.9rem;
+  }
+  .issue-item .issue-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .issue-badge.fixed { background: #c6f6d5; color: #276749; }
+  .issue-badge.warning { background: #feebc8; color: #9b6e1b; }
+
+  /* ===== Result Section ===== */
+  .result-section {
+    max-width: 720px;
+    margin: 30px auto;
+    padding: 0 40px;
+    text-align: center;
+  }
+  .result-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 40px;
+    box-shadow: var(--shadow-md);
+  }
+  .result-card .success-icon {
+    width: 72px; height: 72px;
+    background: #c6f6d5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2rem;
+  }
+  .result-card h2 { font-size: 1.4rem; color: var(--primary); margin-bottom: 8px; }
+  .result-card .result-file { font-weight: 600; color: var(--primary-light); margin-bottom: 20px; }
+  .result-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ===== Features Section ===== */
+  .features-section {
+    max-width: 1000px;
+    margin: 80px auto;
+    padding: 0 40px;
+  }
+  .features-section h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: var(--primary);
+    margin-bottom: 40px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+  }
+  .feature-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .feature-card .feature-icon {
+    width: 48px; height: 48px;
+    background: #ebf4ff;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+  }
+  .feature-card h3 { font-size: 1.05rem; color: var(--primary); margin-bottom: 8px; }
+  .feature-card p { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 32px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal h3 { font-size: 1.2rem; color: var(--primary); margin-bottom: 16px; }
+  .modal .form-group { margin-bottom: 16px; }
+  .modal .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .modal .form-group input, .modal .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  .modal .form-group textarea { resize: vertical; min-height: 60px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ===== Spinner ===== */
+  .spinner {
+    width: 24px; height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary-light);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Toast ===== */
+  .toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    box-shadow: var(--shadow-md);
+    font-size: 0.875rem;
+    animation: slideIn 0.3s ease;
+    border-left: 4px solid var(--primary-light);
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    padding: 32px 40px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.8rem; }
+    .hero { padding: 50px 20px 30px; }
+    .upload-section, .tabs-section, .report-panel, .result-section { padding: 0 20px; }
+    .report-stats { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .nav-inner { padding: 0 20px; }
+    .template-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+
+  /* ===== Print Styles ===== */
+  @media print {
+    .nav, .footer, .upload-section, .btn { display: none; }
+    body { background: white; }
+    .report-card, .result-card { box-shadow: none; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <div class="logo-icon">&#9998;</div>
+      格式快调
+    </a>
+    <ul class="nav-links">
+      <li><a href="#home" class="active">首页</a></li>
+      <li><a href="#templates">模板库</a></li>
+      <li><a href="#features">功能介绍</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-small" onclick="openSaveTemplateModal()">保存当前模板</button>
+      <button class="btn btn-primary btn-small" onclick="document.getElementById('home').scrollIntoView({behavior:'smooth'})">开始排版</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="home">
+  <h1>论文排版，<span class="highlight">一键搞定</span></h1>
+  <p>上传您的 Word 文档，选择模板或自定义格式参数，AI 自动检测格式问题并一键标准化——让每份文档都专业规范。</p>
+</section>
+
+<!-- Upload -->
+<section class="upload-section">
+  <div class="upload-zone" id="uploadZone">
+    <div class="upload-icon">&#128196;</div>
+    <h3>拖拽文件到此处，或点击上传</h3>
+    <p class="sub">支持 .docx / .doc 格式，最大 50MB</p>
+    <input type="file" id="fileInput" accept=".docx,.doc" />
+  </div>
+  <div class="file-card" id="fileCard" style="display:none;">
+    <div class="file-icon">&#128196;</div>
+    <div class="file-info">
+      <div class="file-name" id="fileName">-</div>
+      <div class="file-meta" id="fileMeta">-</div>
+    </div>
+    <button class="file-remove" onclick="removeFile()" title="移除文件">&#10005;</button>
+  </div>
+</section>
+
+<!-- Tabs: Templates & Custom Params -->
+<section class="tabs-section" id="templates">
+  <div class="tabs">
+    <div class="tab active" data-tab="tab-templates">内置模板</div>
+    <div class="tab" data-tab="tab-custom">自定义格式</div>
+    <div class="tab" data-tab="tab-mytemplates">我的模板</div>
+  </div>
+
+  <!-- Built-in Templates -->
+  <div class="tab-content active" id="tab-templates">
+    <div class="template-grid" id="builtinTemplates"></div>
+    <div style="text-align:center;margin-top:20px;">
+      <button class="btn btn-primary btn-large" id="btnStartFormat" disabled onclick="startFormatting()">
+        &#9889; 一键排版
+      </button>
+      <p style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);">请先上传文档并选择模板</p>
+    </div>
+  </div>
+
+  <!-- Custom Format -->
+  <div class="tab-content" id="tab-custom">
+    <div class="format-panel">
+      <div class="format-group">
+        <h4>字体设置</h4>
+        <div class="format-row">
+          <div class="format-field">
+            <label>中文字体</label>
+            <select id="fontCn"><option>宋体</option><option>黑体</option><option>楷体</option><option>仿宋</option><option>微软雅黑</option></select>
+          </div>
+          <div class="format-field">
+            <label>英文字体</label>
+            <select id="fontEn"><option>Times New Roman</option><option>Arial</option><option>Calibri</option><option>Georgia</option></select>
+          </div>
+          <div class="format-field">
+            <label>正文字号</label>
+            <select id="fontSize"><option value="12">小四 (12pt)</option><option value="14">四号 (14pt)</option><option value="10.5">五号 (10.5pt)</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="format-group">
+        <h4>段落设置</h4>
+        <div class="format-row">
+          <div class="format-field">
+            <label>行距</label>
+            <select id="lineSpacing"><option value="1.5">1.5 倍</option><option value="2">2 倍</option><option value="1.25">1.25 倍</option><option value="1">单倍</option></select>
+          </div>
+          <div class="format-field">
+            <label>首行缩进</label>
+            <select id="firstLineIndent"><option value="2">2 字符</option><option value="0">无</option></select>
+          </div>
+          <div class="format-field">
+            <label>对齐方式</label>
+            <select id="alignment"><option value="JUSTIFY">两端对齐</option><option value="LEFT">左对齐</option><option value="CENTER">居中</option></select>
+          </div>
+          <div class="format-field">
+            <label>段前间距 (磅)</label>
+            <input type="number" id="spaceBefore" value="0" min="0" max="48" />
+          </div>
+          <div class="format-field">
+            <label>段后间距 (磅)</label>
+            <input type="number" id="spaceAfter" value="0" min="0" max="48" />
+          </div>
+        </div>
+      </div>
+      <div class="format-group">
+        <h4>页面设置</h4>
+        <div class="format-row">
+          <div class="format-field"><label>上边距 (cm)</label><input type="number" id="marginTop" value="2.54" step="0.1" min="1" max="5" /></div>
+          <div class="format-field"><label>下边距 (cm)</label><input type="number" id="marginBottom" value="2.54" step="0.1" min="1" max="5" /></div>
+          <div class="format-field"><label>左边距 (cm)</label><input type="number" id="marginLeft" value="3.17" step="0.1" min="1" max="5" /></div>
+          <div class="format-field"><label>右边距 (cm)</label><input type="number" id="marginRight" value="3.17" step="0.1" min="1" max="5" /></div>
+        </div>
+      </div>
+      <div class="format-group">
+        <h4>标题格式</h4>
+        <div class="format-row">
+          <div class="format-field">
+            <label>一级标题字号</label>
+            <select id="h1Size"><option value="16">三号 (16pt)</option><option value="15">小三 (15pt)</option><option value="14">四号 (14pt)</option></select>
+          </div>
+          <div class="format-field">
+            <label>一级标题加粗</label>
+            <select id="h1Bold"><option value="true">是</option><option value="false">否</option></select>
+          </div>
+          <div class="format-field">
+            <label>二级标题字号</label>
+            <select id="h2Size"><option value="14">四号 (14pt)</option><option value="12">小四 (12pt)</option></select>
+          </div>
+          <div class="format-field">
+            <label>二级标题加粗</label>
+            <select id="h2Bold"><option value="true">是</option><option value="false">否</option></select>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;">
+        <button class="btn btn-outline" onclick="saveCustomTemplate()" style="margin-right:12px;">保存为我的模板</button>
+        <button class="btn btn-primary btn-large" onclick="startFormattingCustom()" id="btnStartFormatCustom" disabled>
+          &#9889; 按自定义格式排版
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Templates -->
+  <div class="tab-content" id="tab-mytemplates">
+    <div id="myTemplatesList" style="min-height:100px;color:var(--text-secondary);text-align:center;padding:40px;">
+      暂无自定义模板，完成格式设置后点击「保存为我的模板」即可保存。
+    </div>
+  </div>
+</section>
+
+<!-- Detection Report (hidden initially) -->
+<section class="report-panel" id="reportSection" style="display:none;">
+  <div class="report-card">
+    <h3>&#128269; 格式检测报告</h3>
+    <div class="report-stats" id="reportStats"></div>
+    <h4 style="font-size:0.9rem;color:var(--primary);margin-bottom:12px;">问题详情</h4>
+    <ul class="issue-list" id="issueList"></ul>
+  </div>
+</section>
+
+<!-- Result (hidden initially) -->
+<section class="result-section" id="resultSection" style="display:none;">
+  <div class="result-card">
+    <div class="success-icon">&#10003;</div>
+    <h2>排版完成</h2>
+    <p style="color:var(--text-secondary);margin-bottom:4px;">您的文档已按所选模板完成格式标准化</p>
+    <p class="result-file" id="resultFileName"></p>
+    <div class="result-actions">
+      <button class="btn btn-primary btn-large" onclick="downloadResult()">&#128229; 下载排版后文档</button>
+      <button class="btn btn-outline" onclick="resetAll()">重新排版</button>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features-section" id="features">
+  <h2>为什么选择格式快调</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">&#9889;</div>
+      <h3>一键全文排版</h3>
+      <p>上传文档，选择模板，一键完成全文格式统一。告别逐段调整，单次排版从 1.5 小时缩短到秒级。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128269;</div>
+      <h3>AI 格式检测</h3>
+      <p>自动检测标题层级不规范、行距不一致、首行缩进缺失、页边距偏差等 6 大类常见格式问题，生成详细检测报告。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128203;</div>
+      <h3>校园预设模板</h3>
+      <p>内置毕业论文、课程论文、实验报告等 10+ 校园高频场景模板，覆盖文理工多学科格式规范。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128190;</div>
+      <h3>自定义模板保存</h3>
+      <p>将个性化格式参数保存为命名模板，支持编辑、删除与跨文档复用，一次设置，永久受用。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128274;</div>
+      <h3>安全可靠</h3>
+      <p>文件处理后自动清除服务器缓存，原文档不被修改，生成新文件供您下载。全程 HTTPS 加密传输。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9881;</div>
+      <h3>精细参数控制</h3>
+      <p>支持字体、段落、页面、标题等 20+ 格式参数独立调节，满足各类高校格式规范的精细化需求。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>&copy; 2026 格式快调 | Triple F 小组 | 新闻3班 实践一选题</p>
+</footer>
+
+<!-- Save Template Modal -->
+<div class="modal-overlay" id="saveTemplateModal">
+  <div class="modal">
+    <h3>保存自定义模板</h3>
+    <div class="form-group">
+      <label>模板名称</label>
+      <input type="text" id="templateName" placeholder="例如：我的毕业论文模板" />
+    </div>
+    <div class="form-group">
+      <label>备注（可选）</label>
+      <textarea id="templateNote" placeholder="描述该模板适用的场景..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeSaveTemplateModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmSaveTemplate()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===== State =====
+let uploadedFile = null;
+let selectedTemplateId = null;
+let currentFormatParams = {};
+let myTemplates = JSON.parse(localStorage.getItem('fmtTemplates') || '[]');
+let resultFileName = '';
+
+// ===== Built-in Templates =====
+const builtinTemplates = [
+  { id: 't1', name: '本科毕业论文', desc: '宋体小四, 1.5倍行距, 两端对齐, 首行缩进2字符', category: '毕业' },
+  { id: 't2', name: '硕士毕业论文', desc: '宋体小四, 1.5倍行距, 页边距上3下2.5左右3', category: '毕业' },
+  { id: 't3', name: '课程论文（文科）', desc: '宋体小四, 1.25倍行距, 首行缩进2字符', category: '课程' },
+  { id: 't4', name: '课程论文（理工科）', desc: '宋体五号, 单倍行距, 两端对齐', category: '课程' },
+  { id: 't5', name: '实验报告', desc: '宋体五号, 1.25倍行距, 表格三线表', category: '实验' },
+  { id: 't6', name: '开题报告', desc: '宋体小四, 1.5倍行距, 标题黑体加粗', category: '毕业' },
+  { id: 't7', name: '学术期刊投稿', desc: '双栏排版, 英文Times New Roman 10pt', category: '发表' },
+  { id: 't8', name: '小组作业报告', desc: '微软雅黑小四, 1.25倍行距, 标题加粗', category: '课程' },
+  { id: 't9', name: '读书笔记', desc: '楷体小四, 1.5倍行距, 左对齐', category: '日常' },
+  { id: 't10', name: '学年论文', desc: '宋体小四, 1.5倍行距, 页眉页脚规范', category: '课程' },
+  { id: 't11', name: '文献综述', desc: '宋体五号, 1.25倍行距, 参考文献GB/T 7714', category: '毕业' },
+  { id: 't12', name: '答辩PPT提纲', desc: '黑体标题, 宋体正文, 简化格式', category: '毕业' },
+];
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', () => {
+  renderBuiltinTemplates();
+  renderMyTemplates();
+  setupUploadZone();
+  setupTabs();
+});
+
+// ===== Upload =====
+function setupUploadZone() {
+  const zone = document.getElementById('uploadZone');
+  const input = document.getElementById('fileInput');
+
+  input.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleFile(e.target.files[0]);
+  });
+
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+  });
+}
+
+function handleFile(file) {
+  if (!file.name.endsWith('.docx') && !file.name.endsWith('.doc')) {
+    showToast('请上传 .docx 或 .doc 格式的文件', 'error');
+    return;
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('文件大小不能超过 50MB', 'error');
+    return;
+  }
+  uploadedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileMeta').textContent = `${formatSize(file.size)} · ${new Date(file.lastModified).toLocaleDateString('zh-CN')}`;
+  document.getElementById('fileCard').style.display = 'flex';
+  updateFormatButtons();
+  runDetection();
+}
+
+function removeFile() {
+  uploadedFile = null;
+  document.getElementById('fileCard').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('reportSection').style.display = 'none';
+  document.getElementById('resultSection').style.display = 'none';
+  updateFormatButtons();
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+// ===== Detection (Simulated) =====
+function runDetection() {
+  if (!uploadedFile) return;
+  const reportSection = document.getElementById('reportSection');
+  reportSection.style.display = 'block';
+  reportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const issues = [
+    { type: 'fixed', text: '检测到3处标题层级格式不一致，已自动记录待修复方案' },
+    { type: 'fixed', text: '正文行距检测：12段中8段为1.5倍、4段为单倍，不一致' },
+    { type: 'warning', text: '发现2段缺少首行缩进2字符，将按模板统一修复' },
+    { type: 'fixed', text: '页边距检测：左3.5cm右2.8cm，与标准模板左3.17cm右3.17cm存在偏差' },
+    { type: 'warning', text: '全文检测到3种字体（宋体/黑体/微软雅黑），建议统一为模板字体' },
+    { type: 'fixed', text: '标题加粗状态不一致——一级标题2个加粗1个未加粗' },
+    { type: 'fixed', text: '段落间多余空行5处，将自动清理' },
+    { type: 'warning', text: '目录域可能过期，建议排版后手动更新目录（右键→更新域）' },
+  ];
+
+  const fixedCount = issues.filter(i => i.type === 'fixed').length;
+  const warningCount = issues.filter(i => i.type === 'warning').length;
+
+  document.getElementById('reportStats').innerHTML = `
+    <div class="stat-item fixed"><div class="stat-num">${fixedCount}</div><div class="stat-label">可自动修复</div></div>
+    <div class="stat-item warning"><div class="stat-num">${warningCount}</div><div class="stat-label">需关注项</div></div>
+    <div class="stat-item unfixed"><div class="stat-num">0</div><div class="stat-label">无法修复</div></div>
+  `;
+
+  document.getElementById('issueList').innerHTML = issues.map(i => `
+    <li class="issue-item">
+      <span class="issue-badge ${i.type}">${i.type === 'fixed' ? '可修复' : '注意'}</span>
+      ${i.text}
+    </li>
+  `).join('');
+}
+
+// ===== Tabs =====
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+// ===== Templates =====
+function renderBuiltinTemplates() {
+  const grid = document.getElementById('builtinTemplates');
+  grid.innerHTML = builtinTemplates.map(t => `
+    <div class="template-card${selectedTemplateId === t.id ? ' selected' : ''}" onclick="selectTemplate('${t.id}')" data-id="${t.id}">
+      <div class="template-name">${t.name}</div>
+      <div class="template-desc">${t.desc}</div>
+      <div style="margin-top:6px;font-size:0.7rem;color:var(--primary-lighter);">${t.category}</div>
+    </div>
+  `).join('');
+}
+
+function selectTemplate(tid) {
+  selectedTemplateId = tid;
+  document.querySelectorAll('#builtinTemplates .template-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.id === tid);
+  });
+  updateFormatButtons();
+}
+
+function updateFormatButtons() {
+  const hasFile = !!uploadedFile;
+  const hasTemplate = !!selectedTemplateId;
+  document.getElementById('btnStartFormat').disabled = !(hasFile && hasTemplate);
+  document.getElementById('btnStartFormatCustom').disabled = !hasFile;
+}
+
+// ===== Formatting =====
+function startFormatting() {
+  if (!uploadedFile || !selectedTemplateId) return;
+  const template = builtinTemplates.find(t => t.id === selectedTemplateId);
+  simulateFormat(template.name);
+}
+
+function startFormattingCustom() {
+  if (!uploadedFile) return;
+  collectCustomParams();
+  simulateFormat('自定义格式');
+}
+
+function collectCustomParams() {
+  currentFormatParams = {
+    fontCn: document.getElementById('fontCn').value,
+    fontEn: document.getElementById('fontEn').value,
+    fontSize: document.getElementById('fontSize').value,
+    lineSpacing: document.getElementById('lineSpacing').value,
+    firstLineIndent: document.getElementById('firstLineIndent').value,
+    alignment: document.getElementById('alignment').value,
+    spaceBefore: document.getElementById('spaceBefore').value,
+    spaceAfter: document.getElementById('spaceAfter').value,
+    marginTop: document.getElementById('marginTop').value,
+    marginBottom: document.getElementById('marginBottom').value,
+    marginLeft: document.getElementById('marginLeft').value,
+    marginRight: document.getElementById('marginRight').value,
+    h1Size: document.getElementById('h1Size').value,
+    h1Bold: document.getElementById('h1Bold').value,
+    h2Size: document.getElementById('h2Size').value,
+    h2Bold: document.getElementById('h2Bold').value,
+  };
+}
+
+function simulateFormat(templateName) {
+  const btn = document.getElementById('btnStartFormat');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 排版中...';
+
+  setTimeout(() => {
+    const baseName = uploadedFile.name.replace(/\.(docx|doc)$/i, '');
+    resultFileName = `${baseName}_已排版_${templateName}.docx`;
+
+    document.getElementById('resultFileName').textContent = resultFileName;
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    updateFormatButtons();
+
+    showToast(`「${templateName}」排版完成`, 'success');
+  }, 2000);
+}
+
+function downloadResult() {
+  if (!resultFileName) return;
+  // In production: actual file download from backend
+  // For demo: create a placeholder download
+  const blob = new Blob(['格式快调 - 排版结果文件占位符\n该文件将在后端部署后生成实际排版结果。'], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = resultFileName;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('文件下载已开始', 'success');
+}
+
+// ===== Custom Templates =====
+function saveCustomTemplate() {
+  collectCustomParams();
+  openSaveTemplateModal();
+}
+
+function openSaveTemplateModal() {
+  document.getElementById('saveTemplateModal').classList.add('active');
+  document.getElementById('templateName').focus();
+}
+
+function closeSaveTemplateModal() {
+  document.getElementById('saveTemplateModal').classList.remove('active');
+  document.getElementById('templateName').value = '';
+  document.getElementById('templateNote').value = '';
+}
+
+function confirmSaveTemplate() {
+  const name = document.getElementById('templateName').value.trim();
+  if (!name) { showToast('请输入模板名称', 'error'); return; }
+
+  const note = document.getElementById('templateNote').value.trim();
+  const template = {
+    id: 'my_' + Date.now(),
+    name: name,
+    note: note,
+    params: { ...currentFormatParams },
+    createdAt: new Date().toISOString(),
+  };
+
+  myTemplates.unshift(template);
+  localStorage.setItem('fmtTemplates', JSON.stringify(myTemplates));
+  renderMyTemplates();
+  closeSaveTemplateModal();
+  showToast(`模板「${name}」已保存`, 'success');
+}
+
+function renderMyTemplates() {
+  const container = document.getElementById('myTemplatesList');
+  if (myTemplates.length === 0) {
+    container.innerHTML = '<div style="padding:40px;color:var(--text-secondary);text-align:center;">暂无自定义模板，完成格式设置后点击「保存为我的模板」即可保存。</div>';
+    return;
+  }
+  container.innerHTML = `
+    <div class="template-grid" style="max-height:none;">
+      ${myTemplates.map(t => `
+        <div class="template-card" onclick="applyMyTemplate('${t.id}')">
+          <div class="template-name">${escapeHtml(t.name)}</div>
+          <div class="template-desc">${escapeHtml(t.note || '无备注')}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-primary btn-small" onclick="event.stopPropagation();applyMyTemplate('${t.id}')">应用</button>
+            <button class="btn btn-outline btn-small" style="color:var(--danger);border-color:var(--danger);" onclick="event.stopPropagation();deleteMyTemplate('${t.id}')">删除</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function applyMyTemplate(tid) {
+  const t = myTemplates.find(t => t.id === tid);
+  if (!t) return;
+
+  // Apply params to custom panel
+  if (t.params.fontCn) document.getElementById('fontCn').value = t.params.fontCn;
+  if (t.params.fontEn) document.getElementById('fontEn').value = t.params.fontEn;
+  if (t.params.fontSize) document.getElementById('fontSize').value = t.params.fontSize;
+  if (t.params.lineSpacing) document.getElementById('lineSpacing').value = t.params.lineSpacing;
+  if (t.params.firstLineIndent) document.getElementById('firstLineIndent').value = t.params.firstLineIndent;
+  if (t.params.alignment) document.getElementById('alignment').value = t.params.alignment;
+  if (t.params.spaceBefore) document.getElementById('spaceBefore').value = t.params.spaceBefore;
+  if (t.params.spaceAfter) document.getElementById('spaceAfter').value = t.params.spaceAfter;
+  if (t.params.marginTop) document.getElementById('marginTop').value = t.params.marginTop;
+  if (t.params.marginBottom) document.getElementById('marginBottom').value = t.params.marginBottom;
+  if (t.params.marginLeft) document.getElementById('marginLeft').value = t.params.marginLeft;
+  if (t.params.marginRight) document.getElementById('marginRight').value = t.params.marginRight;
+  if (t.params.h1Size) document.getElementById('h1Size').value = t.params.h1Size;
+  if (t.params.h1Bold) document.getElementById('h1Bold').value = t.params.h1Bold;
+  if (t.params.h2Size) document.getElementById('h2Size').value = t.params.h2Size;
+  if (t.params.h2Bold) document.getElementById('h2Bold').value = t.params.h2Bold;
+
+  // Switch to custom tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('.tab[data-tab="tab-custom"]').classList.add('active');
+  document.getElementById('tab-custom').classList.add('active');
+  document.getElementById('templates').scrollIntoView({ behavior: 'smooth' });
+
+  showToast(`已应用模板「${t.name}」`, 'success');
+}
+
+function deleteMyTemplate(tid) {
+  myTemplates = myTemplates.filter(t => t.id !== tid);
+  localStorage.setItem('fmtTemplates', JSON.stringify(myTemplates));
+  renderMyTemplates();
+  showToast('模板已删除', 'success');
+}
+
+// ===== Reset =====
+function resetAll() {
+  removeFile();
+  selectedTemplateId = null;
+  renderBuiltinTemplates();
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('reportSection').style.display = 'none';
+  document.getElementById('home').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ===== Toast =====
+function showToast(msg, type) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type || ''}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 3000);
+}
+
+// ===== Utils =====
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+
+</body>
+</html>
