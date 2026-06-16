@@ -810,7 +810,17 @@
 
 <script>
 // ===== State =====
-const API_BASE = 'http://localhost:8000';
+// 智能检测后端地址：同源部署(Render)用相对路径，本地/GitHub Pages 用 localhost
+function getDefaultApiBase() {
+  const host = location.hostname;
+  // 本地开发 或 GitHub Pages（仅托管前端）
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host.includes('github.io')) {
+    return 'http://localhost:8000';
+  }
+  // 云部署（同源），如 Render.com
+  return '';
+}
+const API_BASE = getDefaultApiBase();
 let backendAvailable = false;
 let uploadedFile = null;
 let selectedTemplateId = null;
