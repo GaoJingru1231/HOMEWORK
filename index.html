@@ -810,18 +810,23 @@
 
 <script>
 // ===== State =====
-// 智能检测后端地址：同源部署(Render)用相对路径，本地/GitHub Pages 用 localhost
+// 智能检测后端地址
 function getDefaultApiBase() {
   const host = location.hostname;
-  // 本地开发 或 GitHub Pages（仅托管前端）
-  if (!host || host === 'localhost' || host === '127.0.0.1' || host.includes('github.io')) {
+  // GitHub Pages 仅托管前端，后端需另行部署
+  if (host && host.includes('github.io')) {
+    return '';  // 空 = 未部署，将由 checkBackend 处理
+  }
+  // 本地开发（localhost / 127.0.0.1 / file://）
+  if (!host || host === 'localhost' || host === '127.0.0.1') {
     return 'http://localhost:8000';
   }
-  // 云部署（同源），如 Render.com
+  // 云部署（同源），如 Render.com / Railway
   return '';
 }
 const API_BASE = getDefaultApiBase();
 let backendAvailable = false;
+let isGithubPages = location.hostname && location.hostname.includes('github.io');
 let uploadedFile = null;
 let selectedTemplateId = null;
 let selectedTemplateKey = null;  // backend template key
@@ -856,6 +861,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function checkBackend() {
+  // GitHub Pages 无后端部署时直接跳过检测
+  if (isGithubPages && !API_BASE) {
+    backendAvailable = false;
+    updateBackendStatus(false);
+    return;
+  }
   try {
     const res = await fetch(`${API_BASE}/api/health`);
     backendAvailable = res.ok;
@@ -871,6 +882,9 @@ function updateBackendStatus(available) {
   if (available) {
     el.textContent = '● 后端已连接';
     el.style.color = 'var(--success)';
+  } else if (isGithubPages) {
+    el.textContent = '● 后端未部署 — 排版功能暂不可用';
+    el.style.color = 'var(--danger)';
   } else {
     el.textContent = '● 后端未启动 — 请运行 python server.py';
     el.style.color = 'var(--danger)';
@@ -930,6 +944,12 @@ function formatSize(bytes) {
 // ===== Detection =====
 async function runDetection() {
   if (!uploadedFile) return;
+
+  if (!backendAvailable) {
+    showToast('后端服务暂未连接，格式检测功能暂不可用', 'error');
+    return;
+  }
+
   const reportSection = document.getElementById('reportSection');
   reportSection.style.display = 'block';
   reportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -943,15 +963,16 @@ async function runDetection() {
   try {
     const res = await fetch(`${API_BASE}/api/detect`, { method: 'POST', body: formData });
     if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`检测失败 (${res.status}): ${errText}`);
+      const errData = await res.json().catch(() => ({}));
+      const errMsg = errData.detail || `服务器错误 (${res.status})`;
+      throw new Error(errMsg);
     }
     const data = await res.json();
     renderDetectionReport(data.report);
   } catch (e) {
+    const msg = e.message.includes('Failed to fetch') ? '无法连接后端服务' : e.message;
     document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">格式检测失败</div>';
-    document.getElementById('issueList').innerHTML = `<li class="issue-item" style="color:var(--danger);">${escapeHtml(e.message)}</li>`;
-    console.error('Detection error:', e);
+    document.getElementById('issueList').innerHTML = `<li class="issue-item" style="color:var(--danger);">${escapeHtml(msg)}</li>`;
   }
 }
 
@@ -1028,6 +1049,12 @@ async function formatWithBackend(buttonId, templateKey, customParams, displayNam
   const btn = document.getElementById(buttonId);
   const otherId = buttonId === 'btnStartFormat' ? 'btnStartFormatCustom' : 'btnStartFormat';
   const btnOther = document.getElementById(otherId);
+
+  if (!backendAvailable) {
+    showToast('后端服务暂未连接，排版功能暂不可用。请等待管理员部署后端服务。', 'error');
+    return;
+  }
+
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 排版中...';
@@ -1062,8 +1089,9 @@ async function formatWithBackend(buttonId, templateKey, customParams, displayNam
 
     const res = await fetch(`${API_BASE}/api/format`, { method: 'POST', body: formData });
     if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(errText || `后端返回 ${res.status}`);
+      const errData = await res.json().catch(() => ({}));
+      const errMsg = errData.detail || `服务器错误 (${res.status})`;
+      throw new Error(errMsg);
     }
     const data = await res.json();
     resultFileName = data.output_filename;
@@ -1079,7 +1107,8 @@ async function formatWithBackend(buttonId, templateKey, customParams, displayNam
     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
     showToast(`「${displayName}」排版完成`, 'success');
   } catch (e) {
-    showToast('排版失败: ' + e.message, 'error');
+    const msg = e.message.includes('Failed to fetch') ? '无法连接后端服务，请检查网络' : e.message;
+    showToast('排版失败: ' + msg, 'error');
   }
 
   btn.disabled = false;
@@ -1095,8 +1124,10 @@ function downloadResult() {
     a.download = resultFileName;
     a.click();
     showToast('文件下载已开始', 'success');
+  } else if (!backendAvailable) {
+    showToast('后端服务暂未连接，无法下载。请等待管理员部署后端服务。', 'error');
   } else {
-    showToast('后端未连接，无法下载真实排版结果。请先启动后端服务（python server.py）。', 'error');
+    showToast('下载链接无效，请重新排版', 'error');
   }
 }
 
