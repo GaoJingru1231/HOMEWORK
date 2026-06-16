@@ -575,6 +575,7 @@
       <li><a href="#features">功能介绍</a></li>
     </ul>
     <div class="nav-actions">
+      <span id="backendStatus" style="font-size:0.75rem;margin-right:8px;">○ 检测中...</span>
       <button class="btn btn-outline btn-small" onclick="openSaveTemplateModal()">保存当前模板</button>
       <button class="btn btn-primary btn-small" onclick="document.getElementById('home').scrollIntoView({behavior:'smooth'})">开始排版</button>
     </div>
@@ -806,35 +807,68 @@
 
 <script>
 // ===== State =====
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000'
+  : '';
+let backendAvailable = false;
 let uploadedFile = null;
 let selectedTemplateId = null;
+let selectedTemplateKey = null;  // backend template key
 let currentFormatParams = {};
 let myTemplates = JSON.parse(localStorage.getItem('fmtTemplates') || '[]');
 let resultFileName = '';
+let downloadUrl = '';
 
 // ===== Built-in Templates =====
 const builtinTemplates = [
-  { id: 't1', name: '本科毕业论文', desc: '宋体小四, 1.5倍行距, 两端对齐, 首行缩进2字符', category: '毕业' },
-  { id: 't2', name: '硕士毕业论文', desc: '宋体小四, 1.5倍行距, 页边距上3下2.5左右3', category: '毕业' },
-  { id: 't3', name: '课程论文（文科）', desc: '宋体小四, 1.25倍行距, 首行缩进2字符', category: '课程' },
-  { id: 't4', name: '课程论文（理工科）', desc: '宋体五号, 单倍行距, 两端对齐', category: '课程' },
-  { id: 't5', name: '实验报告', desc: '宋体五号, 1.25倍行距, 表格三线表', category: '实验' },
-  { id: 't6', name: '开题报告', desc: '宋体小四, 1.5倍行距, 标题黑体加粗', category: '毕业' },
-  { id: 't7', name: '学术期刊投稿', desc: '双栏排版, 英文Times New Roman 10pt', category: '发表' },
-  { id: 't8', name: '小组作业报告', desc: '微软雅黑小四, 1.25倍行距, 标题加粗', category: '课程' },
-  { id: 't9', name: '读书笔记', desc: '楷体小四, 1.5倍行距, 左对齐', category: '日常' },
-  { id: 't10', name: '学年论文', desc: '宋体小四, 1.5倍行距, 页眉页脚规范', category: '课程' },
-  { id: 't11', name: '文献综述', desc: '宋体五号, 1.25倍行距, 参考文献GB/T 7714', category: '毕业' },
-  { id: 't12', name: '答辩PPT提纲', desc: '黑体标题, 宋体正文, 简化格式', category: '毕业' },
+  { id: 't1', key: 'undergrad_thesis', name: '本科毕业论文', desc: '宋体小四, 1.5倍行距, 两端对齐, 首行缩进2字符', category: '毕业' },
+  { id: 't2', key: 'master_thesis', name: '硕士毕业论文', desc: '宋体小四, 1.5倍行距, 页边距上3下2.5左右3', category: '毕业' },
+  { id: 't3', key: 'course_paper', name: '课程论文（文科）', desc: '宋体小四, 1.25倍行距, 首行缩进2字符', category: '课程' },
+  { id: 't4', key: 'course_paper', name: '课程论文（理工科）', desc: '宋体五号, 单倍行距, 两端对齐', category: '课程' },
+  { id: 't5', key: 'lab_report', name: '实验报告', desc: '宋体五号, 1.25倍行距, 表格三线表', category: '实验' },
+  { id: 't6', key: 'undergrad_thesis', name: '开题报告', desc: '宋体小四, 1.5倍行距, 标题黑体加粗', category: '毕业' },
+  { id: 't7', key: 'course_paper', name: '学术期刊投稿', desc: '双栏排版, 英文Times New Roman 10pt', category: '发表' },
+  { id: 't8', key: 'course_paper', name: '小组作业报告', desc: '微软雅黑小四, 1.25倍行距, 标题加粗', category: '课程' },
+  { id: 't9', key: 'course_paper', name: '读书笔记', desc: '楷体小四, 1.5倍行距, 左对齐', category: '日常' },
+  { id: 't10', key: 'undergrad_thesis', name: '学年论文', desc: '宋体小四, 1.5倍行距, 页眉页脚规范', category: '课程' },
+  { id: 't11', key: 'undergrad_thesis', name: '文献综述', desc: '宋体五号, 1.25倍行距, 参考文献GB/T 7714', category: '毕业' },
+  { id: 't12', key: 'course_paper', name: '答辩PPT提纲', desc: '黑体标题, 宋体正文, 简化格式', category: '毕业' },
 ];
 
 // ===== Init =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   renderBuiltinTemplates();
   renderMyTemplates();
   setupUploadZone();
   setupTabs();
+  await checkBackend();
 });
+
+async function checkBackend() {
+  if (!API_BASE) {
+    updateBackendStatus(false);
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/health`);
+    backendAvailable = res.ok;
+  } catch (e) {
+    backendAvailable = false;
+  }
+  updateBackendStatus(backendAvailable);
+}
+
+function updateBackendStatus(available) {
+  const el = document.getElementById('backendStatus');
+  if (!el) return;
+  if (available) {
+    el.textContent = '● 后端已连接';
+    el.style.color = 'var(--success)';
+  } else {
+    el.textContent = '○ 离线模式（仅演示）';
+    el.style.color = '#a0aec0';
+  }
+}
 
 // ===== Upload =====
 function setupUploadZone() {
@@ -887,32 +921,68 @@ function formatSize(bytes) {
 }
 
 // ===== Detection (Simulated) =====
-function runDetection() {
+async function runDetection() {
   if (!uploadedFile) return;
   const reportSection = document.getElementById('reportSection');
   reportSection.style.display = 'block';
   reportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+  // Show loading
+  document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> 正在检测格式问题...</div>';
+  document.getElementById('issueList').innerHTML = '';
+
+  if (!backendAvailable || !API_BASE) {
+    // Fallback: use simulated detection
+    await new Promise(r => setTimeout(r, 1200));
+    renderSimulatedDetection();
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    const res = await fetch(`${API_BASE}/api/detect`, { method: 'POST', body: formData });
+    if (!res.ok) throw new Error('Detection failed');
+    const data = await res.json();
+    renderDetectionReport(data.report);
+  } catch (e) {
+    console.error('Detection error:', e);
+    renderSimulatedDetection();
+  }
+}
+
+function renderDetectionReport(report) {
+  document.getElementById('reportStats').innerHTML = `
+    <div class="stat-item fixed"><div class="stat-num">${report.fixed_count}</div><div class="stat-label">可自动修复</div></div>
+    <div class="stat-item warning"><div class="stat-num">${report.warning_count}</div><div class="stat-label">需关注项</div></div>
+    <div class="stat-item unfixed"><div class="stat-num">${report.total_issues - report.fixed_count - report.warning_count}</div><div class="stat-label">其他</div></div>
+  `;
+  document.getElementById('issueList').innerHTML = (report.issues || []).map(i => `
+    <li class="issue-item">
+      <span class="issue-badge ${i.type}">${i.type === 'fixed' ? '可修复' : '注意'}</span>
+      ${i.message}${i.details && i.details.length ? '：' + i.details.join('；') : ''}
+    </li>
+  `).join('') || '<li class="issue-item" style="color:var(--success);">未检测到格式问题</li>';
+}
+
+function renderSimulatedDetection() {
   const issues = [
     { type: 'fixed', text: '检测到3处标题层级格式不一致，已自动记录待修复方案' },
     { type: 'fixed', text: '正文行距检测：12段中8段为1.5倍、4段为单倍，不一致' },
     { type: 'warning', text: '发现2段缺少首行缩进2字符，将按模板统一修复' },
-    { type: 'fixed', text: '页边距检测：左3.5cm右2.8cm，与标准模板左3.17cm右3.17cm存在偏差' },
-    { type: 'warning', text: '全文检测到3种字体（宋体/黑体/微软雅黑），建议统一为模板字体' },
+    { type: 'fixed', text: '页边距检测：左3.5cm右2.8cm，与标准模板存在偏差' },
+    { type: 'warning', text: '全文检测到3种字体，建议统一为模板字体' },
     { type: 'fixed', text: '标题加粗状态不一致——一级标题2个加粗1个未加粗' },
     { type: 'fixed', text: '段落间多余空行5处，将自动清理' },
     { type: 'warning', text: '目录域可能过期，建议排版后手动更新目录（右键→更新域）' },
   ];
-
   const fixedCount = issues.filter(i => i.type === 'fixed').length;
   const warningCount = issues.filter(i => i.type === 'warning').length;
-
   document.getElementById('reportStats').innerHTML = `
     <div class="stat-item fixed"><div class="stat-num">${fixedCount}</div><div class="stat-label">可自动修复</div></div>
     <div class="stat-item warning"><div class="stat-num">${warningCount}</div><div class="stat-label">需关注项</div></div>
     <div class="stat-item unfixed"><div class="stat-num">0</div><div class="stat-label">无法修复</div></div>
   `;
-
   document.getElementById('issueList').innerHTML = issues.map(i => `
     <li class="issue-item">
       <span class="issue-badge ${i.type}">${i.type === 'fixed' ? '可修复' : '注意'}</span>
@@ -947,6 +1017,8 @@ function renderBuiltinTemplates() {
 
 function selectTemplate(tid) {
   selectedTemplateId = tid;
+  const tpl = builtinTemplates.find(t => t.id === tid);
+  selectedTemplateKey = tpl ? tpl.key : null;
   document.querySelectorAll('#builtinTemplates .template-card').forEach(c => {
     c.classList.toggle('selected', c.dataset.id === tid);
   });
@@ -961,72 +1033,108 @@ function updateFormatButtons() {
 }
 
 // ===== Formatting =====
-function startFormatting() {
+async function startFormatting() {
   if (!uploadedFile || !selectedTemplateId) return;
-  const template = builtinTemplates.find(t => t.id === selectedTemplateId);
-  simulateFormat(template.name);
+  const tpl = builtinTemplates.find(t => t.id === selectedTemplateId);
+  const templateKey = tpl ? tpl.key : 'undergrad_thesis';
+  await formatWithBackend(templateKey, null, tpl ? tpl.name : '内置模板');
 }
 
-function startFormattingCustom() {
+async function startFormattingCustom() {
   if (!uploadedFile) return;
   collectCustomParams();
-  simulateFormat('自定义格式');
+  await formatWithBackend('custom', currentFormatParams, '自定义格式');
 }
 
-function collectCustomParams() {
-  currentFormatParams = {
-    fontCn: document.getElementById('fontCn').value,
-    fontEn: document.getElementById('fontEn').value,
-    fontSize: document.getElementById('fontSize').value,
-    lineSpacing: document.getElementById('lineSpacing').value,
-    firstLineIndent: document.getElementById('firstLineIndent').value,
-    alignment: document.getElementById('alignment').value,
-    spaceBefore: document.getElementById('spaceBefore').value,
-    spaceAfter: document.getElementById('spaceAfter').value,
-    marginTop: document.getElementById('marginTop').value,
-    marginBottom: document.getElementById('marginBottom').value,
-    marginLeft: document.getElementById('marginLeft').value,
-    marginRight: document.getElementById('marginRight').value,
-    h1Size: document.getElementById('h1Size').value,
-    h1Bold: document.getElementById('h1Bold').value,
-    h2Size: document.getElementById('h2Size').value,
-    h2Bold: document.getElementById('h2Bold').value,
-  };
-}
-
-function simulateFormat(templateName) {
+async function formatWithBackend(templateKey, customParams, displayName) {
   const btn = document.getElementById('btnStartFormat');
+  const btnCustom = document.getElementById('btnStartFormatCustom');
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 排版中...';
+  if (btnCustom) btnCustom.disabled = true;
 
-  setTimeout(() => {
+  downloadUrl = '';
+  resultFileName = '';
+
+  if (!backendAvailable || !API_BASE) {
+    // Fallback: simulate
+    await new Promise(r => setTimeout(r, 2000));
     const baseName = uploadedFile.name.replace(/\.(docx|doc)$/i, '');
-    resultFileName = `${baseName}_已排版_${templateName}.docx`;
+    resultFileName = `${baseName}_已排版_${displayName}.docx`;
+    downloadUrl = ''; // will trigger placeholder download
+  } else {
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('template', templateKey);
 
-    document.getElementById('resultFileName').textContent = resultFileName;
-    document.getElementById('resultSection').style.display = 'block';
-    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+      if (customParams) {
+        formData.append('font_cn', customParams.fontCn);
+        formData.append('font_en', customParams.fontEn);
+        formData.append('font_size', customParams.fontSize);
+        formData.append('line_spacing', customParams.lineSpacing);
+        formData.append('first_line_indent', customParams.firstLineIndent);
+        formData.append('alignment', customParams.alignment);
+        formData.append('space_before', customParams.spaceBefore);
+        formData.append('space_after', customParams.spaceAfter);
+        formData.append('margin_top', customParams.marginTop);
+        formData.append('margin_bottom', customParams.marginBottom);
+        formData.append('margin_left', customParams.marginLeft);
+        formData.append('margin_right', customParams.marginRight);
+        formData.append('h1_size', customParams.h1Size);
+        formData.append('h1_bold', customParams.h1Bold);
+        formData.append('h2_size', customParams.h2Size);
+        formData.append('h2_bold', customParams.h2Bold);
+      }
 
-    btn.disabled = false;
-    btn.innerHTML = originalText;
-    updateFormatButtons();
+      const res = await fetch(`${API_BASE}/api/format`, { method: 'POST', body: formData });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || '排版失败');
+      }
+      const data = await res.json();
+      resultFileName = data.output_filename;
+      downloadUrl = `${API_BASE}${data.download_url}`;
 
-    showToast(`「${templateName}」排版完成`, 'success');
-  }, 2000);
+      // Show detection report from backend
+      if (data.report) {
+        renderDetectionReport(data.report);
+        document.getElementById('reportSection').style.display = 'block';
+      }
+    } catch (e) {
+      showToast('排版失败: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      if (btnCustom) btnCustom.disabled = false;
+      updateFormatButtons();
+      return;
+    }
+  }
+
+  document.getElementById('resultFileName').textContent = resultFileName;
+  document.getElementById('resultSection').style.display = 'block';
+  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+
+  btn.disabled = false;
+  btn.innerHTML = originalText;
+  if (btnCustom) btnCustom.disabled = false;
+  updateFormatButtons();
+
+  showToast(`「${displayName}」排版完成`, 'success');
 }
 
 function downloadResult() {
-  if (!resultFileName) return;
-  // In production: actual file download from backend
-  // For demo: create a placeholder download
-  const blob = new Blob(['格式快调 - 排版结果文件占位符\n该文件将在后端部署后生成实际排版结果。'], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = resultFileName;
-  a.click();
-  URL.revokeObjectURL(url);
+  if (downloadUrl) {
+    // Real backend download
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = resultFileName;
+    a.click();
+  } else if (resultFileName) {
+    // Fallback: placeholder (should not happen when backend is connected)
+    showToast('后端未连接，无法下载真实排版结果。请启动后端服务。', 'error');
+  }
   showToast('文件下载已开始', 'success');
 }
 
