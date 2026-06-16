@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>格式快调 - 论文自动排版工具</title>
 <style>
   /* ===== CSS Reset & Variables ===== */
@@ -633,15 +636,15 @@
         <div class="format-row">
           <div class="format-field">
             <label>中文字体</label>
-            <select id="fontCn"><option>宋体</option><option>黑体</option><option>楷体</option><option>仿宋</option><option>微软雅黑</option></select>
+            <select id="fontCn"><option>宋体</option><option>黑体</option><option>楷体</option><option>仿宋</option><option>微软雅黑</option><option>华文楷体</option><option>华文细黑</option><option>华文中宋</option><option>方正书宋</option><option>方正仿宋</option><option>思源宋体</option><option>思源黑体</option></select>
           </div>
           <div class="format-field">
             <label>英文字体</label>
-            <select id="fontEn"><option>Times New Roman</option><option>Arial</option><option>Calibri</option><option>Georgia</option></select>
+            <select id="fontEn"><option>Times New Roman</option><option>Arial</option><option>Calibri</option><option>Georgia</option><option>Courier New</option><option>Verdana</option><option>Helvetica</option><option>Garamond</option><option>Palatino Linotype</option><option>Book Antiqua</option></select>
           </div>
           <div class="format-field">
             <label>正文字号</label>
-            <select id="fontSize"><option value="12">小四 (12pt)</option><option value="14">四号 (14pt)</option><option value="10.5">五号 (10.5pt)</option></select>
+            <select id="fontSize"><option value="42">初号 (42pt)</option><option value="36">小初 (36pt)</option><option value="26">一号 (26pt)</option><option value="24">小一 (24pt)</option><option value="22">二号 (22pt)</option><option value="18">小二 (18pt)</option><option value="16">三号 (16pt)</option><option value="15">小三 (15pt)</option><option value="14">四号 (14pt)</option><option value="12" selected>小四 (12pt)</option><option value="10.5">五号 (10.5pt)</option><option value="9">小五 (9pt)</option><option value="7.5">六号 (7.5pt)</option></select>
           </div>
         </div>
       </div>
@@ -684,7 +687,7 @@
         <div class="format-row">
           <div class="format-field">
             <label>一级标题字号</label>
-            <select id="h1Size"><option value="16">三号 (16pt)</option><option value="15">小三 (15pt)</option><option value="14">四号 (14pt)</option></select>
+            <select id="h1Size"><option value="26">一号 (26pt)</option><option value="22">二号 (22pt)</option><option value="18">小二 (18pt)</option><option value="16" selected>三号 (16pt)</option><option value="15">小三 (15pt)</option><option value="14">四号 (14pt)</option></select>
           </div>
           <div class="format-field">
             <label>一级标题加粗</label>
@@ -692,7 +695,7 @@
           </div>
           <div class="format-field">
             <label>二级标题字号</label>
-            <select id="h2Size"><option value="14">四号 (14pt)</option><option value="12">小四 (12pt)</option></select>
+            <select id="h2Size"><option value="22">二号 (22pt)</option><option value="18">小二 (18pt)</option><option value="16">三号 (16pt)</option><option value="15">小三 (15pt)</option><option value="14" selected>四号 (14pt)</option><option value="12">小四 (12pt)</option></select>
           </div>
           <div class="format-field">
             <label>二级标题加粗</label>
@@ -807,9 +810,7 @@
 
 <script>
 // ===== State =====
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8000'
-  : '';
+const API_BASE = 'http://localhost:8000';
 let backendAvailable = false;
 let uploadedFile = null;
 let selectedTemplateId = null;
@@ -845,10 +846,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function checkBackend() {
-  if (!API_BASE) {
-    updateBackendStatus(false);
-    return;
-  }
   try {
     const res = await fetch(`${API_BASE}/api/health`);
     backendAvailable = res.ok;
@@ -865,8 +862,8 @@ function updateBackendStatus(available) {
     el.textContent = '● 后端已连接';
     el.style.color = 'var(--success)';
   } else {
-    el.textContent = '○ 离线模式（仅演示）';
-    el.style.color = '#a0aec0';
+    el.textContent = '● 后端未启动 — 请运行 python server.py';
+    el.style.color = 'var(--danger)';
   }
 }
 
@@ -920,34 +917,31 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-// ===== Detection (Simulated) =====
+// ===== Detection =====
 async function runDetection() {
   if (!uploadedFile) return;
   const reportSection = document.getElementById('reportSection');
   reportSection.style.display = 'block';
   reportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  // Show loading
   document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> 正在检测格式问题...</div>';
   document.getElementById('issueList').innerHTML = '';
 
-  if (!backendAvailable || !API_BASE) {
-    // Fallback: use simulated detection
-    await new Promise(r => setTimeout(r, 1200));
-    renderSimulatedDetection();
-    return;
-  }
+  const formData = new FormData();
+  formData.append('file', uploadedFile);
 
   try {
-    const formData = new FormData();
-    formData.append('file', uploadedFile);
     const res = await fetch(`${API_BASE}/api/detect`, { method: 'POST', body: formData });
-    if (!res.ok) throw new Error('Detection failed');
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`检测失败 (${res.status}): ${errText}`);
+    }
     const data = await res.json();
     renderDetectionReport(data.report);
   } catch (e) {
+    document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">格式检测失败</div>';
+    document.getElementById('issueList').innerHTML = `<li class="issue-item" style="color:var(--danger);">${escapeHtml(e.message)}</li>`;
     console.error('Detection error:', e);
-    renderSimulatedDetection();
   }
 }
 
@@ -963,32 +957,6 @@ function renderDetectionReport(report) {
       ${i.message}${i.details && i.details.length ? '：' + i.details.join('；') : ''}
     </li>
   `).join('') || '<li class="issue-item" style="color:var(--success);">未检测到格式问题</li>';
-}
-
-function renderSimulatedDetection() {
-  const issues = [
-    { type: 'fixed', text: '检测到3处标题层级格式不一致，已自动记录待修复方案' },
-    { type: 'fixed', text: '正文行距检测：12段中8段为1.5倍、4段为单倍，不一致' },
-    { type: 'warning', text: '发现2段缺少首行缩进2字符，将按模板统一修复' },
-    { type: 'fixed', text: '页边距检测：左3.5cm右2.8cm，与标准模板存在偏差' },
-    { type: 'warning', text: '全文检测到3种字体，建议统一为模板字体' },
-    { type: 'fixed', text: '标题加粗状态不一致——一级标题2个加粗1个未加粗' },
-    { type: 'fixed', text: '段落间多余空行5处，将自动清理' },
-    { type: 'warning', text: '目录域可能过期，建议排版后手动更新目录（右键→更新域）' },
-  ];
-  const fixedCount = issues.filter(i => i.type === 'fixed').length;
-  const warningCount = issues.filter(i => i.type === 'warning').length;
-  document.getElementById('reportStats').innerHTML = `
-    <div class="stat-item fixed"><div class="stat-num">${fixedCount}</div><div class="stat-label">可自动修复</div></div>
-    <div class="stat-item warning"><div class="stat-num">${warningCount}</div><div class="stat-label">需关注项</div></div>
-    <div class="stat-item unfixed"><div class="stat-num">0</div><div class="stat-label">无法修复</div></div>
-  `;
-  document.getElementById('issueList').innerHTML = issues.map(i => `
-    <li class="issue-item">
-      <span class="issue-badge ${i.type}">${i.type === 'fixed' ? '可修复' : '注意'}</span>
-      ${i.text}
-    </li>
-  `).join('');
 }
 
 // ===== Tabs =====
@@ -1037,105 +1005,89 @@ async function startFormatting() {
   if (!uploadedFile || !selectedTemplateId) return;
   const tpl = builtinTemplates.find(t => t.id === selectedTemplateId);
   const templateKey = tpl ? tpl.key : 'undergrad_thesis';
-  await formatWithBackend(templateKey, null, tpl ? tpl.name : '内置模板');
+  await formatWithBackend('btnStartFormat', templateKey, null, tpl ? tpl.name : '内置模板');
 }
 
 async function startFormattingCustom() {
   if (!uploadedFile) return;
   collectCustomParams();
-  await formatWithBackend('custom', currentFormatParams, '自定义格式');
+  await formatWithBackend('btnStartFormatCustom', 'custom', currentFormatParams, '自定义格式');
 }
 
-async function formatWithBackend(templateKey, customParams, displayName) {
-  const btn = document.getElementById('btnStartFormat');
-  const btnCustom = document.getElementById('btnStartFormatCustom');
+async function formatWithBackend(buttonId, templateKey, customParams, displayName) {
+  const btn = document.getElementById(buttonId);
+  const otherId = buttonId === 'btnStartFormat' ? 'btnStartFormatCustom' : 'btnStartFormat';
+  const btnOther = document.getElementById(otherId);
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 排版中...';
-  if (btnCustom) btnCustom.disabled = true;
+  if (btnOther) btnOther.disabled = true;
 
   downloadUrl = '';
   resultFileName = '';
 
-  if (!backendAvailable || !API_BASE) {
-    // Fallback: simulate
-    await new Promise(r => setTimeout(r, 2000));
-    const baseName = uploadedFile.name.replace(/\.(docx|doc)$/i, '');
-    resultFileName = `${baseName}_已排版_${displayName}.docx`;
-    downloadUrl = ''; // will trigger placeholder download
-  } else {
-    try {
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
-      formData.append('template', templateKey);
+  try {
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    formData.append('template', templateKey);
 
-      if (customParams) {
-        formData.append('font_cn', customParams.fontCn);
-        formData.append('font_en', customParams.fontEn);
-        formData.append('font_size', customParams.fontSize);
-        formData.append('line_spacing', customParams.lineSpacing);
-        formData.append('first_line_indent', customParams.firstLineIndent);
-        formData.append('alignment', customParams.alignment);
-        formData.append('space_before', customParams.spaceBefore);
-        formData.append('space_after', customParams.spaceAfter);
-        formData.append('margin_top', customParams.marginTop);
-        formData.append('margin_bottom', customParams.marginBottom);
-        formData.append('margin_left', customParams.marginLeft);
-        formData.append('margin_right', customParams.marginRight);
-        formData.append('h1_size', customParams.h1Size);
-        formData.append('h1_bold', customParams.h1Bold);
-        formData.append('h2_size', customParams.h2Size);
-        formData.append('h2_bold', customParams.h2Bold);
-      }
-
-      const res = await fetch(`${API_BASE}/api/format`, { method: 'POST', body: formData });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || '排版失败');
-      }
-      const data = await res.json();
-      resultFileName = data.output_filename;
-      downloadUrl = `${API_BASE}${data.download_url}`;
-
-      // Show detection report from backend
-      if (data.report) {
-        renderDetectionReport(data.report);
-        document.getElementById('reportSection').style.display = 'block';
-      }
-    } catch (e) {
-      showToast('排版失败: ' + e.message, 'error');
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      if (btnCustom) btnCustom.disabled = false;
-      updateFormatButtons();
-      return;
+    if (customParams) {
+      formData.append('font_cn', customParams.fontCn);
+      formData.append('font_en', customParams.fontEn);
+      formData.append('font_size', customParams.fontSize);
+      formData.append('line_spacing', customParams.lineSpacing);
+      formData.append('first_line_indent', customParams.firstLineIndent);
+      formData.append('alignment', customParams.alignment);
+      formData.append('space_before', customParams.spaceBefore);
+      formData.append('space_after', customParams.spaceAfter);
+      formData.append('margin_top', customParams.marginTop);
+      formData.append('margin_bottom', customParams.marginBottom);
+      formData.append('margin_left', customParams.marginLeft);
+      formData.append('margin_right', customParams.marginRight);
+      formData.append('h1_size', customParams.h1Size);
+      formData.append('h1_bold', customParams.h1Bold);
+      formData.append('h2_size', customParams.h2Size);
+      formData.append('h2_bold', customParams.h2Bold);
     }
-  }
 
-  document.getElementById('resultFileName').textContent = resultFileName;
-  document.getElementById('resultSection').style.display = 'block';
-  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    const res = await fetch(`${API_BASE}/api/format`, { method: 'POST', body: formData });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || `后端返回 ${res.status}`);
+    }
+    const data = await res.json();
+    resultFileName = data.output_filename;
+    downloadUrl = `${API_BASE}${data.download_url}`;
+
+    if (data.report) {
+      renderDetectionReport(data.report);
+      document.getElementById('reportSection').style.display = 'block';
+    }
+
+    document.getElementById('resultFileName').textContent = resultFileName;
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    showToast(`「${displayName}」排版完成`, 'success');
+  } catch (e) {
+    showToast('排版失败: ' + e.message, 'error');
+  }
 
   btn.disabled = false;
   btn.innerHTML = originalText;
-  if (btnCustom) btnCustom.disabled = false;
+  if (btnOther) btnOther.disabled = false;
   updateFormatButtons();
-
-  showToast(`「${displayName}」排版完成`, 'success');
 }
 
 function downloadResult() {
   if (downloadUrl) {
-    // Real backend download
     const a = document.createElement('a');
     a.href = downloadUrl;
     a.download = resultFileName;
     a.click();
-  } else if (resultFileName) {
-    // Fallback: placeholder (should not happen when backend is connected)
-    showToast('后端未连接，无法下载真实排版结果。请启动后端服务。', 'error');
+    showToast('文件下载已开始', 'success');
+  } else {
+    showToast('后端未连接，无法下载真实排版结果。请先启动后端服务（python server.py）。', 'error');
   }
-  showToast('文件下载已开始', 'success');
 }
 
 // ===== Custom Templates =====
@@ -1254,6 +1206,30 @@ function showToast(msg, type) {
   toast.textContent = msg;
   container.appendChild(toast);
   setTimeout(() => { toast.remove(); }, 3000);
+}
+
+// ===== Custom Params =====
+function collectCustomParams() {
+  const getVal = (id) => document.getElementById(id).value;
+  currentFormatParams = {
+    fontCn: getVal('fontCn'),
+    fontEn: getVal('fontEn'),
+    fontSize: parseFloat(getVal('fontSize')),
+    lineSpacing: parseFloat(getVal('lineSpacing')),
+    firstLineIndent: parseInt(getVal('firstLineIndent')),
+    alignment: getVal('alignment'),
+    spaceBefore: parseFloat(getVal('spaceBefore')),
+    spaceAfter: parseFloat(getVal('spaceAfter')),
+    marginTop: parseFloat(getVal('marginTop')),
+    marginBottom: parseFloat(getVal('marginBottom')),
+    marginLeft: parseFloat(getVal('marginLeft')),
+    marginRight: parseFloat(getVal('marginRight')),
+    h1Size: parseFloat(getVal('h1Size')),
+    h1Bold: getVal('h1Bold') === 'true',
+    h2Size: parseFloat(getVal('h2Size')),
+    h2Bold: getVal('h2Bold') === 'true',
+  };
+  return currentFormatParams;
 }
 
 // ===== Utils =====
