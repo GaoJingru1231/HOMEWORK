@@ -813,9 +813,9 @@
 // 智能检测后端地址
 function getDefaultApiBase() {
   const host = location.hostname;
-  // GitHub Pages 仅托管前端，后端需另行部署
+  // GitHub Pages → 使用公网后端地址（需本地运行 python server.py）
   if (host && host.includes('github.io')) {
-    return '';  // 空 = 未部署，将由 checkBackend 处理
+    return 'http://61.178.103.143:8000';
   }
   // 本地开发（localhost / 127.0.0.1 / file://）
   if (!host || host === 'localhost' || host === '127.0.0.1') {
@@ -861,12 +861,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function checkBackend() {
-  // GitHub Pages 无后端部署时直接跳过检测
-  if (isGithubPages && !API_BASE) {
-    backendAvailable = false;
-    updateBackendStatus(false);
-    return;
-  }
   try {
     const res = await fetch(`${API_BASE}/api/health`);
     backendAvailable = res.ok;
