@@ -341,6 +341,42 @@ def detect_format_issues(doc: Document, params: FormatParams) -> DetectionReport
     )
 
 
+# ===== 辅助：文件格式验证 =====
+
+ACCEPTED_MIME_TYPES = {
+    # .docx
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+    # .doc
+    "application/msword",
+    "application/x-msword",
+    # 通用（某些系统/浏览器上传时返回这些）
+    "application/octet-stream",
+    "application/zip",
+    "application/x-zip-compressed",
+    "binary/octet-stream",
+    "",  # 某些环境 content_type 为空
+    None,
+}
+
+def is_valid_doc_file(filename: Optional[str], content_type: Optional[str]) -> bool:
+    """判断是否为可接受的 Word 文档格式"""
+    # 优先通过文件名后缀判断（大小写不敏感）
+    if filename:
+        lower_name = filename.lower()
+        if lower_name.endswith('.docx') or lower_name.endswith('.doc'):
+            return True
+    # 通过 content_type 判断
+    if content_type in ACCEPTED_MIME_TYPES:
+        return True
+    # content_type 可能是多值（如 "application/zip; charset=binary"）
+    if content_type:
+        ct_base = content_type.split(';')[0].strip().lower()
+        if ct_base in ACCEPTED_MIME_TYPES:
+            return True
+    return False
+
+
 # ===== API 路由 =====
 
 @app.get("/api/health")
@@ -367,15 +403,15 @@ async def detect_format(file: UploadFile = File(...)):
     上传文档并检测格式问题，返回检测报告。
     使用默认"本科毕业论文"模板参数作为检测基准。
     """
-    if file.content_type not in [
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/msword",
-        "application/octet-stream",
-    ] and not (file.filename and (file.filename.endswith('.docx') or file.filename.endswith('.doc'))):
-        raise HTTPException(status_code=400, detail="仅支持 .docx / .doc 格式")
+    if not is_valid_doc_file(file.filename, file.content_type):
+        raise HTTPException(status_code=400, detail="仅支持 .docx / .doc 格式，请确认文件后缀正确")
 
     contents = await file.read()
-    doc = Document(io.BytesIO(contents))
+    # 二次兜底：直接尝试打开，python-docx 会抛出异常告知是否有效
+    try:
+        doc = Document(io.BytesIO(contents))
+    except Exception:
+        raise HTTPException(status_code=400, detail="文件格式无效，请上传有效的 .docx 文档")
 
     params = PRESET_TEMPLATES["undergrad_thesis"]
     report = detect_format_issues(doc, params)
@@ -407,10 +443,15 @@ async def format_document(
     """
     上传文档并按指定模板 + 可选自定义参数进行排版，返回处理后的文档。
     """
-    if file.filename and not (file.filename.endswith('.docx') or file.filename.endswith('.doc')):
-        raise HTTPException(status_code=400, detail="仅支持 .docx / .doc 格式")
+    if not is_valid_doc_file(file.filename, file.content_type):
+        raise HTTPException(status_code=400, detail="仅支持 .docx / .doc 格式，请确认文件后缀正确")
 
-    # 确定格式参数（深拷贝避免跨请求污染 PRESET_TEMPLATES）
+    # 读取文档（二次兜底：python-docx 会报错如果文件无效）
+    contents = await file.read()
+    try:
+        doc = Document(io.BytesIO(contents))
+    except Exception:
+        raise HTTPException(status_code=400, detail="文件格式无效，请上传有效的 .docx 文档")
     if template in PRESET_TEMPLATES:
         params = deepcopy(PRESET_TEMPLATES[template])
     else:
@@ -428,10 +469,6 @@ async def format_document(
     for field, value in override_fields.items():
         if value is not None:
             setattr(params, field, value)
-
-    # 读取文档
-    contents = await file.read()
-    doc = Document(io.BytesIO(contents))
 
     # 检测
     report = detect_format_issues(doc, params)
