@@ -1,0 +1,3 @@
+.workbuddy/
+node_modules/
+*.log
