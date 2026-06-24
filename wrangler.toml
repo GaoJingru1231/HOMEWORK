@@ -1,0 +1,14 @@
+name = "format-kuaitiao"
+type = "webpack"
+
+[[workers]]
+  workers_dev = true
+
+[site]
+  bucket = "./"
+  entry-point = "workers-site"
+
+[env.production]
+  name = "format-kuaitiao"
+  route = ""
+  workers_dev = true
