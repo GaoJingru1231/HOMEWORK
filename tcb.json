@@ -1,0 +1,50 @@
+{
+  "envId": "format-kuaitiao",
+  "region": "ap-shanghai",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "format-api",
+      "runtime": "Python3.11",
+      "memorySize": 256,
+      "timeout": 60,
+      "handler": "index.main",
+      "envVariables": {},
+      " Triggers": [
+        {
+          "name": "http",
+          "type": "http",
+          "config": "{\"AuthType\": \"none\"}"
+        }
+      ]
+    }
+  ],
+  "framework": {
+    "name": "format-kuaitiao",
+    "plugins": {
+      "client": {
+        "use": "@cloudbase/framework-plugin-website",
+        "inputs": {
+          "outputPath": ".",
+          "cloudPath": "/",
+          "ignore": ["*.py", "*.txt", "cloudfunctions/**", ".git/**"]
+        }
+      },
+      "server": {
+        "use": "@cloudbase/framework-plugin-function",
+        "inputs": {
+          "functionRootPath": "./cloudfunctions",
+          "functions": [
+            {
+              "name": "format-api",
+              "runtime": "Python3.11",
+              "memory": 256,
+              "handler": "index.main",
+              "envVariables": {}
+            }
+          ]
+        }
+      }
+    }
+  }
+}
