@@ -835,20 +835,33 @@ let myTemplates = JSON.parse(localStorage.getItem('fmtTemplates') || '[]');
 let resultFileName = '';
 let downloadUrl = '';
 
-// ===== Built-in Templates =====
+// ===== Built-in Templates（12套，与后端 PRESET_TEMPLATES 一一对应）=====
+// params 与后端 FormatParams 字段一致，选中时同步到自定义面板
 const builtinTemplates = [
-  { id: 't1', key: 'undergrad_thesis', name: '本科毕业论文', desc: '宋体小四, 1.5倍行距, 两端对齐, 首行缩进2字符', category: '毕业' },
-  { id: 't2', key: 'master_thesis', name: '硕士毕业论文', desc: '宋体小四, 1.5倍行距, 页边距上3下2.5左右3', category: '毕业' },
-  { id: 't3', key: 'course_paper', name: '课程论文（文科）', desc: '宋体小四, 1.25倍行距, 首行缩进2字符', category: '课程' },
-  { id: 't4', key: 'course_paper', name: '课程论文（理工科）', desc: '宋体五号, 单倍行距, 两端对齐', category: '课程' },
-  { id: 't5', key: 'lab_report', name: '实验报告', desc: '宋体五号, 1.25倍行距, 表格三线表', category: '实验' },
-  { id: 't6', key: 'undergrad_thesis', name: '开题报告', desc: '宋体小四, 1.5倍行距, 标题黑体加粗', category: '毕业' },
-  { id: 't7', key: 'course_paper', name: '学术期刊投稿', desc: '双栏排版, 英文Times New Roman 10pt', category: '发表' },
-  { id: 't8', key: 'course_paper', name: '小组作业报告', desc: '微软雅黑小四, 1.25倍行距, 标题加粗', category: '课程' },
-  { id: 't9', key: 'course_paper', name: '读书笔记', desc: '楷体小四, 1.5倍行距, 左对齐', category: '日常' },
-  { id: 't10', key: 'undergrad_thesis', name: '学年论文', desc: '宋体小四, 1.5倍行距, 页眉页脚规范', category: '课程' },
-  { id: 't11', key: 'undergrad_thesis', name: '文献综述', desc: '宋体五号, 1.25倍行距, 参考文献GB/T 7714', category: '毕业' },
-  { id: 't12', key: 'course_paper', name: '答辩PPT提纲', desc: '黑体标题, 宋体正文, 简化格式', category: '毕业' },
+  { id: 't1', key: 'undergrad_thesis',       name: '本科毕业论文',     desc: '宋体小四, 1.5倍行距, 两端对齐, 首行缩进2字符', category: '毕业',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:12, lineSpacing:1.5, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:16, h1Bold:true, h2Size:14, h2Bold:true }},
+  { id: 't2', key: 'master_thesis',          name: '硕士毕业论文',     desc: '宋体小四, 1.5倍行距, 页边距上3下2.5左右3',   category: '毕业',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:12, lineSpacing:1.5, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:3.0,  marginBottom:2.5,  marginLeft:3.0,  marginRight:3.0,  h1Size:16, h1Bold:true, h2Size:14, h2Bold:true }},
+  { id: 't3', key: 'course_paper_arts',      name: '课程论文（文科）', desc: '宋体小四, 1.25倍行距, 首行缩进2字符',       category: '课程',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:12, lineSpacing:1.25, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:14, h1Bold:true, h2Size:12, h2Bold:true }},
+  { id: 't4', key: 'course_paper_sci',       name: '课程论文（理工科）', desc: '宋体五号, 单倍行距, 两端对齐',             category: '课程',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:10.5, lineSpacing:1.0, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:14, h1Bold:true, h2Size:12, h2Bold:true }},
+  { id: 't5', key: 'lab_report',             name: '实验报告',         desc: '宋体五号, 1.25倍行距, 表格三线表',           category: '实验',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:10.5, lineSpacing:1.25, firstLineIndent:0, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:2.54, marginRight:2.54, h1Size:14, h1Bold:true, h2Size:12, h2Bold:true }},
+  { id: 't6', key: 'proposal_report',        name: '开题报告',         desc: '宋体小四, 1.5倍行距, 标题黑体加粗',           category: '毕业',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:12, lineSpacing:1.5, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.0,  marginRight:3.0,  h1Size:16, h1Bold:true, h2Size:14, h2Bold:true }},
+  { id: 't7', key: 'journal_submission',     name: '学术期刊投稿',     desc: '宋体五号, 1.25倍行距, 英文Times New Roman',  category: '发表',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:10.5, lineSpacing:1.25, firstLineIndent:0, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:2.54, marginRight:2.54, h1Size:12, h1Bold:true, h2Size:10.5, h2Bold:true }},
+  { id: 't8', key: 'group_report',           name: '小组作业报告',     desc: '微软雅黑小四, 1.25倍行距, 标题加粗',         category: '课程',
+    params: { fontCn:'微软雅黑', fontEn:'Calibri', fontSize:12, lineSpacing:1.25, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:14, h1Bold:true, h2Size:12, h2Bold:true }},
+  { id: 't9', key: 'reading_notes',          name: '读书笔记',         desc: '楷体小四, 1.5倍行距, 左对齐',               category: '日常',
+    params: { fontCn:'楷体', fontEn:'Times New Roman', fontSize:12, lineSpacing:1.5, firstLineIndent:2, alignment:'LEFT', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:14, h1Bold:true, h2Size:12, h2Bold:false }},
+  { id: 't10', key: 'annual_paper',          name: '学年论文',         desc: '宋体小四, 1.5倍行距, 页眉页脚规范',           category: '课程',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:12, lineSpacing:1.5, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:16, h1Bold:true, h2Size:14, h2Bold:true }},
+  { id: 't11', key: 'literature_review',     name: '文献综述',         desc: '宋体五号, 1.25倍行距, 参考文献GB/T 7714',    category: '毕业',
+    params: { fontCn:'宋体', fontEn:'Times New Roman', fontSize:10.5, lineSpacing:1.25, firstLineIndent:2, alignment:'JUSTIFY', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:12, h1Bold:true, h2Size:10.5, h2Bold:true }},
+  { id: 't12', key: 'defense_outline',       name: '答辩PPT提纲',      desc: '黑体标题, 宋体正文, 简化格式',               category: '毕业',
+    params: { fontCn:'黑体', fontEn:'Arial', fontSize:12, lineSpacing:1.25, firstLineIndent:0, alignment:'LEFT', spaceBefore:0, spaceAfter:0, marginTop:2.54, marginBottom:2.54, marginLeft:3.17, marginRight:3.17, h1Size:14, h1Bold:true, h2Size:12, h2Bold:true }},
 ];
 
 // ===== Init =====
@@ -1006,16 +1019,108 @@ function renderBuiltinTemplates() {
       <div style="margin-top:6px;font-size:0.7rem;color:var(--primary-lighter);">${t.category}</div>
     </div>
   `).join('');
+
+  // 选中后渲染参数预览卡片
+  renderTemplatePreview();
+}
+
+/** 渲染选中模板的参数预览卡片 */
+function renderTemplatePreview() {
+  let previewEl = document.getElementById('templatePreview');
+  if (!previewEl) {
+    // 首次创建预览卡片容器，插入到 template grid 后面
+    const grid = document.getElementById('builtinTemplates');
+    previewEl = document.createElement('div');
+    previewEl.id = 'templatePreview';
+    grid.insertAdjacentElement('afterend', previewEl);
+  }
+
+  if (!selectedTemplateId) {
+    previewEl.innerHTML = '';
+    previewEl.style.display = 'none';
+    return;
+  }
+
+  const tpl = builtinTemplates.find(t => t.id === selectedTemplateId);
+  if (!tpl || !tpl.params) {
+    previewEl.innerHTML = '';
+    previewEl.style.display = 'none';
+    return;
+  }
+
+  const p = tpl.params;
+  const alignMap = { JUSTIFY: '两端对齐', LEFT: '左对齐', CENTER: '居中', RIGHT: '右对齐' };
+  previewEl.style.display = 'block';
+  previewEl.style.marginTop = '16px';
+  previewEl.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:16px 20px;font-size:0.82rem;">
+      <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">📋 「${tpl.name}」参数预览</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 20px;color:var(--text);">
+        <div>中文字体：<b>${p.fontCn}</b></div>
+        <div>英文字体：<b>${p.fontEn}</b></div>
+        <div>正文字号：<b>${p.fontSize}pt</b></div>
+        <div>行距：<b>${p.lineSpacing}倍</b></div>
+        <div>首行缩进：<b>${p.firstLineIndent > 0 ? p.firstLineIndent + '字符' : '无'}</b></div>
+        <div>对齐：<b>${alignMap[p.alignment] || p.alignment}</b></div>
+        <div>页边距：<b>上${p.marginTop} 下${p.marginBottom} 左${p.marginLeft} 右${p.marginRight} cm</b></div>
+        <div>一级标题：<b>${p.h1Size}pt${p.h1Bold ? ' 加粗' : ''}</b></div>
+        <div>二级标题：<b>${p.h2Size}pt${p.h2Bold ? ' 加粗' : ''}</b></div>
+        <div>段前/段后：<b>${p.spaceBefore}/${p.spaceAfter} pt</b></div>
+      </div>
+    </div>
+  `;
 }
 
 function selectTemplate(tid) {
   selectedTemplateId = tid;
   const tpl = builtinTemplates.find(t => t.id === tid);
   selectedTemplateKey = tpl ? tpl.key : null;
+
+  // 同步模板参数到自定义格式面板
+  if (tpl && tpl.params) {
+    const p = tpl.params;
+    // 字体
+    setSelectValue('fontCn', p.fontCn);
+    setSelectValue('fontEn', p.fontEn);
+    setSelectValue('fontSize', p.fontSize);
+    // 段落
+    setSelectValue('lineSpacing', p.lineSpacing);
+    setSelectValue('firstLineIndent', p.firstLineIndent);
+    setSelectValue('alignment', p.alignment);
+    document.getElementById('spaceBefore').value = p.spaceBefore;
+    document.getElementById('spaceAfter').value = p.spaceAfter;
+    // 页面
+    document.getElementById('marginTop').value = p.marginTop;
+    document.getElementById('marginBottom').value = p.marginBottom;
+    document.getElementById('marginLeft').value = p.marginLeft;
+    document.getElementById('marginRight').value = p.marginRight;
+    // 标题
+    setSelectValue('h1Size', p.h1Size);
+    setSelectValue('h1Bold', p.h1Bold ? 'true' : 'false');
+    setSelectValue('h2Size', p.h2Size);
+    setSelectValue('h2Bold', p.h2Bold ? 'true' : 'false');
+    // 更新 currentFormatParams
+    collectCustomParams();
+  }
+
   document.querySelectorAll('#builtinTemplates .template-card').forEach(c => {
     c.classList.toggle('selected', c.dataset.id === tid);
   });
   updateFormatButtons();
+  renderTemplatePreview();
+}
+
+/** 安全设置 select 的值（值不存在时保持原值） */
+function setSelectValue(elemId, value) {
+  const el = document.getElementById(elemId);
+  const strVal = String(value);
+  for (const opt of el.options) {
+    if (opt.value === strVal) { el.value = strVal; return; }
+  }
+  // 精确匹配失败，尝试模糊匹配（兼容 fontSize 等 number 类型）
+  for (const opt of el.options) {
+    if (parseFloat(opt.value) === parseFloat(strVal)) { el.value = opt.value; return; }
+  }
 }
 
 function updateFormatButtons() {
@@ -1030,7 +1135,9 @@ async function startFormatting() {
   if (!uploadedFile || !selectedTemplateId) return;
   const tpl = builtinTemplates.find(t => t.id === selectedTemplateId);
   const templateKey = tpl ? tpl.key : 'undergrad_thesis';
-  await formatWithBackend('btnStartFormat', templateKey, null, tpl ? tpl.name : '内置模板');
+  // 用自定义面板当前参数（用户可能在选中模板后微调过）
+  collectCustomParams();
+  await formatWithBackend('btnStartFormat', templateKey, currentFormatParams, tpl ? tpl.name : '内置模板');
 }
 
 async function startFormattingCustom() {

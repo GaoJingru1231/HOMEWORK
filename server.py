@@ -76,9 +76,11 @@ class DetectionReport(BaseModel):
     warning_count: int
     issues: list[DetectionIssue]
 
-# ===== 预设模板 =====
+# ===== 预设模板（12套，与前端 builtinTemplates 一一对应）=====
+# 字号说明：小四=12pt，五号=10.5pt，小二=18pt，三号=16pt，四号=14pt
 
 PRESET_TEMPLATES = {
+    # t1 本科毕业论文
     "undergrad_thesis": FormatParams(
         font_cn="宋体", font_en="Times New Roman", font_size=12.0,
         line_spacing=1.5, first_line_indent=2, alignment="JUSTIFY",
@@ -86,6 +88,7 @@ PRESET_TEMPLATES = {
         margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
         h1_size=16.0, h1_bold=True, h2_size=14.0, h2_bold=True,
     ),
+    # t2 硕士毕业论文
     "master_thesis": FormatParams(
         font_cn="宋体", font_en="Times New Roman", font_size=12.0,
         line_spacing=1.5, first_line_indent=2, alignment="JUSTIFY",
@@ -93,18 +96,84 @@ PRESET_TEMPLATES = {
         margin_top=3.0, margin_bottom=2.5, margin_left=3.0, margin_right=3.0,
         h1_size=16.0, h1_bold=True, h2_size=14.0, h2_bold=True,
     ),
-    "course_paper": FormatParams(
+    # t3 课程论文（文科）
+    "course_paper_arts": FormatParams(
         font_cn="宋体", font_en="Times New Roman", font_size=12.0,
         line_spacing=1.25, first_line_indent=2, alignment="JUSTIFY",
         space_before=0, space_after=0,
         margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
         h1_size=14.0, h1_bold=True, h2_size=12.0, h2_bold=True,
     ),
+    # t4 课程论文（理工科）
+    "course_paper_sci": FormatParams(
+        font_cn="宋体", font_en="Times New Roman", font_size=10.5,
+        line_spacing=1.0, first_line_indent=2, alignment="JUSTIFY",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
+        h1_size=14.0, h1_bold=True, h2_size=12.0, h2_bold=True,
+    ),
+    # t5 实验报告
     "lab_report": FormatParams(
         font_cn="宋体", font_en="Times New Roman", font_size=10.5,
         line_spacing=1.25, first_line_indent=0, alignment="JUSTIFY",
         space_before=0, space_after=0,
         margin_top=2.54, margin_bottom=2.54, margin_left=2.54, margin_right=2.54,
+        h1_size=14.0, h1_bold=True, h2_size=12.0, h2_bold=True,
+    ),
+    # t6 开题报告
+    "proposal_report": FormatParams(
+        font_cn="宋体", font_en="Times New Roman", font_size=12.0,
+        line_spacing=1.5, first_line_indent=2, alignment="JUSTIFY",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.0, margin_right=3.0,
+        h1_size=16.0, h1_bold=True, h2_size=14.0, h2_bold=True,
+    ),
+    # t7 学术期刊投稿
+    "journal_submission": FormatParams(
+        font_cn="宋体", font_en="Times New Roman", font_size=10.5,
+        line_spacing=1.25, first_line_indent=0, alignment="JUSTIFY",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=2.54, margin_right=2.54,
+        h1_size=12.0, h1_bold=True, h2_size=10.5, h2_bold=True,
+    ),
+    # t8 小组作业报告
+    "group_report": FormatParams(
+        font_cn="微软雅黑", font_en="Calibri", font_size=12.0,
+        line_spacing=1.25, first_line_indent=2, alignment="JUSTIFY",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
+        h1_size=14.0, h1_bold=True, h2_size=12.0, h2_bold=True,
+    ),
+    # t9 读书笔记
+    "reading_notes": FormatParams(
+        font_cn="楷体", font_en="Times New Roman", font_size=12.0,
+        line_spacing=1.5, first_line_indent=2, alignment="LEFT",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
+        h1_size=14.0, h1_bold=True, h2_size=12.0, h2_bold=False,
+    ),
+    # t10 学年论文
+    "annual_paper": FormatParams(
+        font_cn="宋体", font_en="Times New Roman", font_size=12.0,
+        line_spacing=1.5, first_line_indent=2, alignment="JUSTIFY",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
+        h1_size=16.0, h1_bold=True, h2_size=14.0, h2_bold=True,
+    ),
+    # t11 文献综述
+    "literature_review": FormatParams(
+        font_cn="宋体", font_en="Times New Roman", font_size=10.5,
+        line_spacing=1.25, first_line_indent=2, alignment="JUSTIFY",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
+        h1_size=12.0, h1_bold=True, h2_size=10.5, h2_bold=True,
+    ),
+    # t12 答辩PPT提纲
+    "defense_outline": FormatParams(
+        font_cn="黑体", font_en="Arial", font_size=12.0,
+        line_spacing=1.25, first_line_indent=0, alignment="LEFT",
+        space_before=0, space_after=0,
+        margin_top=2.54, margin_bottom=2.54, margin_left=3.17, margin_right=3.17,
         h1_size=14.0, h1_bold=True, h2_size=12.0, h2_bold=True,
     ),
 }
