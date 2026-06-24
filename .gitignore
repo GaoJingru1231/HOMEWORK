@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# 构建产物
+dist/
+.wrangler/
+
+# 运行时产物
+processed/
+uploads/*.docx
+!uploads/test_before.docx
+
+# 临时文件
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

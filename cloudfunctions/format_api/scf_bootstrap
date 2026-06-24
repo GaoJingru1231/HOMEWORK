@@ -1,0 +1,5 @@
+#!/bin/bash
+# 腾讯云 SCF Web 函数启动入口
+# Web 函数(Type=HTTP)通过执行本脚本启动 HTTP server,需监听 $SCF_SERVER_PORT
+cd /var/user
+exec python3 wsgi_adapter.py
