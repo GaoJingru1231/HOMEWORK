@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a365d">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -32,13 +33,14 @@
     --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 16px; scroll-behavior: smooth; }
+  html { font-size: 16px; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
   body {
     font-family: var(--font-sans);
     background: var(--bg);
     color: var(--text);
     line-height: 1.7;
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   /* ===== Navigation ===== */
@@ -546,13 +548,94 @@
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    .hero h1 { font-size: 1.8rem; }
-    .hero { padding: 50px 20px 30px; }
-    .upload-section, .tabs-section, .report-panel, .result-section { padding: 0 20px; }
-    .report-stats { grid-template-columns: 1fr; }
+    /* Navigation */
+    .nav-inner { padding: 0 16px; height: 56px; }
+    .nav-brand { font-size: 1.05rem; gap: 8px; }
+    .nav-brand .logo-icon { width: 30px; height: 30px; font-size: 0.95rem; }
     .nav-links { display: none; }
-    .nav-inner { padding: 0 20px; }
-    .template-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .nav-actions { gap: 6px; }
+    .nav-actions .btn { padding: 6px 12px; font-size: 0.78rem; }
+    .nav-actions .btn.btn-outline { display: none; }  /* 手机上隐藏次要按钮 */
+    #backendStatus { font-size: 0.7rem; margin-right: 4px; }
+
+    /* Hero */
+    .hero { padding: 40px 20px 24px; }
+    .hero h1 { font-size: 1.7rem; letter-spacing: -0.3px; }
+    .hero p { font-size: 1rem; margin-bottom: 24px; }
+
+    /* Layout containers */
+    .upload-section, .tabs-section, .report-panel, .result-section { padding: 0 16px; max-width: 100%; }
+    .features-section { padding: 0 16px; margin: 50px auto; max-width: 100%; }
+
+    /* Upload zone */
+    .upload-zone { padding: 36px 20px; }
+    .upload-icon { width: 52px; height: 52px; font-size: 1.6rem; margin-bottom: 14px; }
+    .upload-zone h3 { font-size: 1.05rem; }
+
+    /* File card */
+    .file-card { padding: 14px 16px; gap: 12px; }
+    .file-card .file-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+
+    /* Tabs */
+    .tabs { margin-bottom: 18px; }
+    .tab { padding: 10px 16px; font-size: 0.875rem; }
+
+    /* Template grid */
+    .template-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: none; }
+    .template-card { padding: 14px; }
+
+    /* Format panel */
+    .format-panel { padding: 18px; }
+    .format-group { margin-bottom: 18px; }
+    .format-group h4 { font-size: 0.875rem; margin-bottom: 10px; }
+    .format-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .format-field select, .format-field input { padding: 9px 10px; font-size: 0.85rem; }
+
+    /* Report */
+    .report-card { padding: 18px; }
+    .report-card h3 { font-size: 1.05rem; }
+    .report-stats { grid-template-columns: 1fr; gap: 10px; }
+    .stat-item { padding: 12px; }
+    .stat-item .stat-num { font-size: 1.5rem; }
+    .issue-item { font-size: 0.85rem; padding: 8px 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+
+    /* Result */
+    .result-card { padding: 24px 20px; }
+    .result-card .success-icon { width: 56px; height: 56px; font-size: 1.6rem; margin-bottom: 14px; }
+    .result-card h2 { font-size: 1.2rem; }
+    .result-actions { flex-direction: column; gap: 10px; }
+    .result-actions .btn { width: 100%; }
+    .btn-large { padding: 12px 24px; font-size: 0.95rem; }
+
+    /* Features */
+    .features-section h2 { font-size: 1.4rem; margin-bottom: 24px; }
+    .features-grid { grid-template-columns: 1fr; gap: 16px; }
+    .feature-card { padding: 20px; }
+
+    /* Modal */
+    .modal { padding: 22px 18px; width: 94%; }
+    .modal h3 { font-size: 1.05rem; margin-bottom: 12px; }
+    .modal-actions { flex-direction: column-reverse; gap: 8px; }
+    .modal-actions .btn { width: 100%; }
+
+    /* Template info preview (selectedTemplateInfo) */
+    .tpl-param-item { padding: 6px 8px; }
+
+    /* Footer */
+    .footer { padding: 24px 16px; margin-top: 40px; }
+
+    /* Toast - 不遮挡底部按钮 */
+    .toast { max-width: calc(100vw - 32px); font-size: 0.82rem; padding: 10px 14px; }
+  }
+
+  /* 超小屏(<=480px):模板/格式字段强制单列 */
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 1.45rem; }
+    .template-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .template-card { padding: 12px; }
+    .template-card .template-name { font-size: 0.85rem; }
+    .format-row { grid-template-columns: 1fr; }
+    .nav-actions .btn { padding: 5px 10px; font-size: 0.72rem; }
   }
 
   /* ===== Print Styles ===== */
@@ -641,7 +724,7 @@
   <div class="upload-zone" id="uploadZone">
     <div class="upload-icon">&#128196;</div>
     <h3>拖拽文件到此处，或点击上传</h3>
-    <p class="sub">支持 .docx / .doc 格式，最大 50MB</p>
+    <p class="sub">支持 .docx 格式，最大 5MB</p>
     <input type="file" id="fileInput" accept=".docx,.doc" />
   </div>
   <div class="file-card" id="fileCard" style="display:none;">
@@ -1044,13 +1127,15 @@ function setupUploadZone() {
   });
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5MB(SCF 函数 URL 请求体上限 6MB,留 1MB 给 multipart 开销)
+
 function handleFile(file) {
   if (!file.name.endsWith('.docx') && !file.name.endsWith('.doc')) {
     showToast('请上传 .docx 或 .doc 格式的文件', 'error');
     return;
   }
-  if (file.size > 50 * 1024 * 1024) {
-    showToast('文件大小不能超过 50MB', 'error');
+  if (file.size > MAX_FILE_SIZE) {
+    showToast(`文件 ${formatSize(file.size)} 超过 5MB 上限,云函数无法处理。请精简内容或图片后重试`, 'error');
     return;
   }
   uploadedFile = file;
@@ -1092,11 +1177,23 @@ async function runDetection() {
   document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> 正在检测格式问题...</div>';
   document.getElementById('issueList').innerHTML = '';
 
+  // 冷启动提示:3s 后未完成,提示首次使用需冷启动
+  const detectTimer = setTimeout(() => {
+    document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> 首次使用需冷启动,请稍候...</div>';
+  }, 3000);
+
+  const controller = new AbortController();
+  const timeoutTimer = setTimeout(() => controller.abort(), 55000);
+
   const formData = new FormData();
   formData.append('file', uploadedFile);
 
   try {
-    const res = await fetch(`${API_BASE}/api/detect`, { method: 'POST', body: formData });
+    const res = await fetch(`${API_BASE}/api/detect`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       const errMsg = errData.detail || `服务器错误 (${res.status})`;
@@ -1105,9 +1202,19 @@ async function runDetection() {
     const data = await res.json();
     renderDetectionReport(data.report);
   } catch (e) {
-    const msg = e.message.includes('Failed to fetch') ? '无法连接后端服务' : e.message;
+    let msg;
+    if (e.name === 'AbortError') {
+      msg = '检测超时(>55s),可能是文档过大或服务器冷启动。请稍后重试';
+    } else if (e.message.includes('Failed to fetch')) {
+      msg = '无法连接后端服务,请检查网络后重试';
+    } else {
+      msg = e.message;
+    }
     document.getElementById('reportStats').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">格式检测失败</div>';
     document.getElementById('issueList').innerHTML = `<li class="issue-item" style="color:var(--danger);">${escapeHtml(msg)}</li>`;
+  } finally {
+    clearTimeout(detectTimer);
+    clearTimeout(timeoutTimer);
   }
 }
 
@@ -1187,7 +1294,7 @@ function renderTemplateInfo(tpl) {
       <span style="font-weight:700;color:var(--primary);">已选模板：${tpl.name}</span>
       <span style="background:#ebf4ff;color:var(--primary-light);font-size:0.7rem;padding:2px 8px;border-radius:10px;">${tpl.category}</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;font-size:0.82rem;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;font-size:0.82rem;">
       <div class="tpl-param-item"><span class="tpl-param-label">中文字体</span><span class="tpl-param-val">${p.fontCn}</span></div>
       <div class="tpl-param-item"><span class="tpl-param-label">英文字体</span><span class="tpl-param-val">${p.fontEn.replace('Times New Roman','TNR')}</span></div>
       <div class="tpl-param-item"><span class="tpl-param-label">正文字号</span><span class="tpl-param-val">${p.fontSize}pt</span></div>
@@ -1257,6 +1364,17 @@ async function formatWithBackend(buttonId, templateKey, customParams, displayNam
   btn.innerHTML = '<span class="spinner"></span> 排版中...';
   if (btnOther) btnOther.disabled = true;
 
+  // 冷启动提示:3s 后未完成,提示首次使用需冷启动(SCF 闲置实例首次请求 5-10s)
+  const coldStartTimer = setTimeout(() => {
+    if (btn.disabled) {
+      btn.innerHTML = '<span class="spinner"></span> 首次使用需冷启动,请稍候...';
+    }
+  }, 3000);
+
+  // 超时控制:55s 后主动放弃(SCF 函数超时 60s,留 5s 缓冲)
+  const controller = new AbortController();
+  const timeoutTimer = setTimeout(() => controller.abort(), 55000);
+
   downloadUrl = '';
   resultFileName = '';
 
@@ -1284,7 +1402,11 @@ async function formatWithBackend(buttonId, templateKey, customParams, displayNam
       formData.append('h2_bold', customParams.h2Bold);
     }
 
-    const res = await fetch(`${API_BASE}/api/format`, { method: 'POST', body: formData });
+    const res = await fetch(`${API_BASE}/api/format`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       const errMsg = errData.detail || `服务器错误 (${res.status})`;
@@ -1313,14 +1435,23 @@ async function formatWithBackend(buttonId, templateKey, customParams, displayNam
     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
     showToast(`「${displayName}」排版完成`, 'success');
   } catch (e) {
-    const msg = e.message.includes('Failed to fetch') ? '无法连接后端服务，请检查网络' : e.message;
+    let msg;
+    if (e.name === 'AbortError') {
+      msg = '排版超时(>55s),可能是文档过大或服务器冷启动。请稍后重试';
+    } else if (e.message.includes('Failed to fetch')) {
+      msg = '无法连接后端服务,请检查网络后重试';
+    } else {
+      msg = e.message;
+    }
     showToast('排版失败: ' + msg, 'error');
+  } finally {
+    clearTimeout(coldStartTimer);
+    clearTimeout(timeoutTimer);
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    if (btnOther) btnOther.disabled = false;
+    updateFormatButtons();
   }
-
-  btn.disabled = false;
-  btn.innerHTML = originalText;
-  if (btnOther) btnOther.disabled = false;
-  updateFormatButtons();
 }
 
 function downloadResult() {
