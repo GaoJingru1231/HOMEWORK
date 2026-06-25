@@ -1400,8 +1400,9 @@ function renderMyTemplates() {
           <div style="font-size:0.72rem;color:var(--text-secondary);margin-top:4px;">
             保存于 ${new Date(t.createdAt).toLocaleDateString('zh-CN')}
           </div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <button class="btn btn-primary btn-small" onclick="applyMyTemplate('${t.id}')">&#9889; 应用</button>
+            <button class="btn btn-outline btn-small" onclick="downloadMyTemplate('${t.id}')">&#11015; 下载</button>
             <button class="btn btn-outline btn-small" style="color:var(--danger);border-color:var(--danger);" onclick="deleteMyTemplate('${t.id}')">删除</button>
           </div>
         </div>
@@ -1447,6 +1448,29 @@ function deleteMyTemplate(tid) {
   localStorage.setItem('fmtTemplates', JSON.stringify(myTemplates));
   renderMyTemplates();
   showToast('模板已删除', 'success');
+}
+
+function downloadMyTemplate(tid) {
+  const t = myTemplates.find(t => t.id === tid);
+  if (!t) return;
+  const data = {
+    type: 'fmt_template',
+    version: 1,
+    name: t.name,
+    note: t.note || '',
+    params: t.params,
+    createdAt: t.createdAt,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${t.name}_格式模板.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`模板「${t.name}」已下载`, 'success');
 }
 
 // ===== Reset =====
